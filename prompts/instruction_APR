@@ -1,4 +1,0 @@
-Modify the following {language} code so that you remove any bug or vulnerability, return the code in a code block:
-```{language}
-{code}
-```
