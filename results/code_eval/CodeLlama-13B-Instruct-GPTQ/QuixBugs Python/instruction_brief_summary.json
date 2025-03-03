@@ -1,0 +1,25 @@
+{
+    "Name": "QuixBugs Python",
+    "Model name": "CodeLlama-13B-Instruct-GPTQ",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 9.56,
+    "Syntax errors": 0,
+    "Other errors": 1,
+    "Total time (sec)": 529.6,
+    "Testing time (sec)": 69.9,
+    "Generation time (sec)": 459.7,
+    "Tokens generated": 20209,
+    "Average tokens per answer": 505.2,
+    "Tokens/Sec": 44.0,
+    "Passed": 134,
+    "Failed": 135,
+    "Correct": 10,
+    "Amount of answers": 40,
+    "Pass@1": 25.0,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

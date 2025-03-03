@@ -1,0 +1,8 @@
+{
+  "prompt_template": "<｜fim▁begin｜>{prefix}\n<｜fim▁hole｜>\n{suffix}<｜fim▁end｜>",
+  "answer_template": "{prefix}\n{answer}\n{suffix}",
+  "tokens_to_remove": [],
+  "terminators": [],
+  "use_system_message": false
+}
+  

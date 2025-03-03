@@ -1,0 +1,25 @@
+{
+    "Name": "llm-vul",
+    "Model name": "Llama-2-7B-Chat-GPTQ",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 17.09,
+    "Syntax errors": 0,
+    "Other errors": 76,
+    "Total time (sec)": 1974.8,
+    "Testing time (sec)": 638.7,
+    "Generation time (sec)": 1336.1,
+    "Tokens generated": 77744,
+    "Average tokens per answer": 845.0,
+    "Tokens/Sec": 58.2,
+    "Passed": 2450,
+    "Failed": 39,
+    "Correct": 1,
+    "Amount of answers": 92,
+    "Pass@1": 1.1,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 2000,
+        "do_sample": false
+    }
+}

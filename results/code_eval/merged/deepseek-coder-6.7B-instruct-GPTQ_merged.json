@@ -1,0 +1,88 @@
+{
+      "instruction": [
+            {
+                  "Name": "HumanEval",
+                  "Model name": "deepseek-coder-6.7B-instruct-GPTQ",
+                  "Area": "CodeGen",
+                  "Total time": 787.6,
+                  "Maximum memory usage (GB)": 4.92,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 27,
+                              "Other errors": 1,
+                              "Generation time (sec)": 682.6,
+                              "Tokens generated": 42928,
+                              "Average tokens per answer": 261.7560975609756,
+                              "Passed": 110,
+                              "Failed": 54,
+                              "Correct": 110,
+                              "Amount of answers": 164,
+                              "Success Rate": 67.1,
+                              "Pass@1": 67.1
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 400,
+                        "do_sample": false
+                  }
+            },
+            {
+                  "Name": "QuixBugs Java",
+                  "Model name": "deepseek-coder-6.7B-instruct-GPTQ",
+                  "Area": "APR",
+                  "Total time": 424.1,
+                  "Maximum memory usage (GB)": 5.41,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 7,
+                              "Other errors": 0,
+                              "Generation time (sec)": 328.1,
+                              "Tokens generated": 19652,
+                              "Average tokens per answer": 491.3,
+                              "Passed": 122,
+                              "Failed": 103,
+                              "Correct": 12,
+                              "Amount of answers": 40,
+                              "Success Rate": 30.0,
+                              "Pass@1": 30.0
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 800,
+                        "do_sample": false
+                  }
+            },
+            {
+                  "Name": "QuixBugs Python",
+                  "Model name": "deepseek-coder-6.7B-instruct-GPTQ",
+                  "Area": "APR",
+                  "Total time": 229.0,
+                  "Maximum memory usage (GB)": 5.01,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 26,
+                              "Other errors": 1,
+                              "Generation time (sec)": 226.5,
+                              "Tokens generated": 13820,
+                              "Average tokens per answer": 345.5,
+                              "Passed": 62,
+                              "Failed": 28,
+                              "Correct": 5,
+                              "Amount of answers": 40,
+                              "Success Rate": 12.5,
+                              "Pass@1": 12.5
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 400,
+                        "do_sample": false
+                  }
+            }
+      ]
+}

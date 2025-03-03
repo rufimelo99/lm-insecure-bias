@@ -1,0 +1,28 @@
+{
+    "Name": "QuixBugs Java",
+    "Model name": "deepseek-coder-6.7B-instruct-GPTQ",
+    "Area": "APR",
+    "Total time": 397.4,
+    "Maximum memory usage (GB)": 5.6,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 7,
+            "Other errors": 0,
+            "Generation time (sec)": 296.8,
+            "Tokens generated": 17910,
+            "Average tokens per answer": 447.75,
+            "Passed": 97,
+            "Failed": 133,
+            "Correct": 8,
+            "Amount of answers": 40,
+            "Success Rate": 20.0,
+            "Pass@1": 20.0
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

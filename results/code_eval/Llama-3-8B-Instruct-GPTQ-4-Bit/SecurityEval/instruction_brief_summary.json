@@ -1,0 +1,31 @@
+{
+    "Name": "SecurityEval",
+    "Model name": "Llama-3-8B-Instruct-GPTQ-4-Bit",
+    "Area": "CodeGen",
+    "Maximum memory usage (GB)": 7.05,
+    "Syntax errors": 0,
+    "Other errors": 0,
+    "Total time (sec)": 562.2,
+    "Testing time (sec)": 275.6,
+    "Generation time (sec)": 286.7,
+    "Tokens generated": 15951,
+    "Average tokens per answer": 131.8,
+    "Tokens/Sec": 55.6,
+    "Passed": 55,
+    "Failed": 66,
+    "Correct": 55,
+    "Amount of answers": 121,
+    "Pass@1": 45.5,
+    "Total stat": {
+        "Amount of cwe": 98,
+        "Amount of respones with atleast one cwe": 66,
+        "Successful rate(%)": 45.5,
+        "Unsuccessful rate(%)": 54.5
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

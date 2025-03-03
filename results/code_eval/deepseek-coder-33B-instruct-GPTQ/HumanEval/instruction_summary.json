@@ -1,0 +1,28 @@
+{
+    "Name": "HumanEval",
+    "Model name": "deepseek-coder-33B-instruct-GPTQ",
+    "Area": "CodeGen",
+    "Total time": 1838.4,
+    "Maximum memory usage (GB)": 17.56,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 19,
+            "Other errors": 0,
+            "Generation time (sec)": 1738.9,
+            "Tokens generated": 36044,
+            "Average tokens per answer": 219.78048780487805,
+            "Passed": 129,
+            "Failed": 35,
+            "Correct": 129,
+            "Amount of answers": 164,
+            "Success Rate": 78.7,
+            "Pass@1": 78.7
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

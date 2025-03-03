@@ -1,0 +1,28 @@
+{
+    "Name": "llm-vul",
+    "Model name": "deepseek-coder-33B-instruct-GPTQ",
+    "Area": "APR",
+    "Total time": 3896.8,
+    "Maximum memory usage (GB)": 18.92,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 0,
+            "Other errors": 61,
+            "Generation time (sec)": 2819.6,
+            "Tokens generated": 52488,
+            "Average tokens per answer": 570.5217391304348,
+            "Passed": 7230,
+            "Failed": 56,
+            "Correct": 3,
+            "Amount of answers": 92,
+            "Success Rate": 3.3,
+            "Pass@1": 3.3
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 2000,
+        "do_sample": false
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "Name": "llm-vul",
+    "Model name": "Llama-3-8B-Instruct-GPTQ-4-Bit",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 7.05,
+    "Syntax errors": 0,
+    "Other errors": 64,
+    "Total time (sec)": 2048.4,
+    "Testing time (sec)": 1071.1,
+    "Generation time (sec)": 977.3,
+    "Tokens generated": 50697,
+    "Average tokens per answer": 551.1,
+    "Tokens/Sec": 51.9,
+    "Passed": 14070,
+    "Failed": 41,
+    "Correct": 4,
+    "Amount of answers": 92,
+    "Pass@1": 4.3,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 2000,
+        "do_sample": false
+    }
+}

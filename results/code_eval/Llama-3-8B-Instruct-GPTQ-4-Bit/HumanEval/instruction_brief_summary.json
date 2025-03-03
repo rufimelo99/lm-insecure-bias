@@ -1,0 +1,25 @@
+{
+    "Name": "HumanEval",
+    "Model name": "Llama-3-8B-Instruct-GPTQ-4-Bit",
+    "Area": "CodeGen",
+    "Maximum memory usage (GB)": 7.05,
+    "Syntax errors": 28,
+    "Other errors": 0,
+    "Total time (sec)": 633.2,
+    "Testing time (sec)": 97.8,
+    "Generation time (sec)": 535.4,
+    "Tokens generated": 29651,
+    "Average tokens per answer": 180.8,
+    "Tokens/Sec": 55.4,
+    "Passed": 92,
+    "Failed": 72,
+    "Correct": 92,
+    "Amount of answers": 164,
+    "Pass@1": 56.1,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

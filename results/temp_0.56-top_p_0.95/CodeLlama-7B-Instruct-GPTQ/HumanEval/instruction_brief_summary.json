@@ -1,0 +1,28 @@
+{
+    "Name": "HumanEval",
+    "Model name": "CodeLlama-7B-Instruct-GPTQ",
+    "Area": "CodeGen",
+    "Maximum memory usage (GB)": 4.87,
+    "Syntax errors": 452,
+    "Other errors": 11,
+    "Total time (sec)": 6114.8,
+    "Testing time (sec)": 272.9,
+    "Generation time (sec)": 5841.9,
+    "Tokens generated": 380267,
+    "Average tokens per answer": 231.9,
+    "Tokens/Sec": 65.1,
+    "Passed": 636,
+    "Failed": 1004,
+    "Correct": 636,
+    "Amount of answers": 1640,
+    "Pass@1": 37.8,
+    "Pass@10": 57.9,
+    "Configurations": {
+        "Answers per task": 10,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": true,
+        "temperature": 0.56,
+        "top_p": 0.95
+    }
+}

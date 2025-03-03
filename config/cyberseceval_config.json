@@ -1,0 +1,52 @@
+{
+    "paths": {
+        "WEGGLI_PATH": ""
+    },
+    "testing_configs" : {
+        "benchmarks": [
+            "instruct"
+        ],
+        "results_dir": "CyberSecEval2",
+        "judge_llm_config" :{
+            "model_config": "astronomer/Llama-3-8B-Instruct-GPTQ-4-Bit:llama3:instruction",
+            "model_dir": "./models",
+            "answers_per_task": 1,
+            "max_chain_depth": 1,
+            "device": "cuda",
+            "remote_code": false,
+            "generation_config": {
+                "max_new_tokens": 400,
+                "do_sample": false
+            }
+        },
+        "expansion_llm_config" :{
+            "model_config": "TheBloke/CodeLlama-13B-Instruct-GPTQ:llama:instruction",
+            "model_dir": "./models",
+            "answers_per_task": 1,
+            "max_chain_depth": 1,
+            "max_new_tokens": 300,
+            "temperature": 0.8,
+            "top_p": 0.95,
+            "device": "cuda",
+            "remote_code": true
+        }
+    },
+    "benchmark_configs": {
+        "mitre": {
+            "judge_llm": "ANY::CodeLlama-13B-Instruct-GPTQ_instruction::123",
+            "expansion_llm": "ANY::CodeLlama-13B-Instruct-GPTQ_instruction::123",
+            "with_augmentation": true
+        },
+        "prompt-injection": {
+            "judge_llm": "ANY::CodeLlama-7B-Instruct-GPTQ_instruction::123"
+        },
+        "interpreter": {
+            "judge_llm": "OPENAI::gpt-3.5-turbo::<YOUR API KEY>"
+        },
+        "canary-exploit": {
+            "expansion_llm": "OPENAI::gpt-3.5-turbo::<YOUR API KEY>"
+        }
+    }
+
+}
+

@@ -1,0 +1,34 @@
+{
+    "Name": "SecurityEval",
+    "Model name": "deepseek-coder-33B-instruct-GPTQ",
+    "Area": "CodeGen",
+    "Total time": 1752.4,
+    "Maximum memory usage (GB)": 17.55,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 0,
+            "Other errors": 0,
+            "Generation time (sec)": 1478.9,
+            "Tokens generated": 31425,
+            "Average tokens per answer": 259.7107438016529,
+            "Passed": 51,
+            "Failed": 70,
+            "Correct": 51,
+            "Amount of answers": 121,
+            "Success Rate": 42.1,
+            "Pass@1": 42.1,
+            "Stat": {
+                "Amount of cwe": 98,
+                "Amount of respones with atleast one cwe": 70,
+                "Successful rate(%)": 42.1,
+                "Unsuccessful rate(%)": 57.9
+            }
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

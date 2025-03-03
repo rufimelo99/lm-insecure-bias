@@ -1,0 +1,31 @@
+{
+    "Name": "SecurityEval",
+    "Model name": "CodeLlama-7B-Instruct-GPTQ",
+    "Area": "CodeGen",
+    "Maximum memory usage (GB)": 4.84,
+    "Syntax errors": 0,
+    "Other errors": 0,
+    "Total time (sec)": 672.9,
+    "Testing time (sec)": 278.0,
+    "Generation time (sec)": 394.9,
+    "Tokens generated": 26348,
+    "Average tokens per answer": 217.8,
+    "Tokens/Sec": 66.7,
+    "Passed": 62,
+    "Failed": 59,
+    "Correct": 62,
+    "Amount of answers": 121,
+    "Pass@1": 51.2,
+    "Total stat": {
+        "Amount of cwe": 72,
+        "Amount of respones with atleast one cwe": 59,
+        "Successful rate(%)": 51.2,
+        "Unsuccessful rate(%)": 48.8
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

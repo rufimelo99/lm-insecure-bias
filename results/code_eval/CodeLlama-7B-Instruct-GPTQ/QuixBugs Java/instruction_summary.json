@@ -1,0 +1,28 @@
+{
+    "Name": "QuixBugs Java",
+    "Model name": "CodeLlama-7B-Instruct-GPTQ",
+    "Area": "APR",
+    "Total time": 361.8,
+    "Maximum memory usage (GB)": 5.47,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 0,
+            "Other errors": 0,
+            "Generation time (sec)": 286.7,
+            "Tokens generated": 18148,
+            "Average tokens per answer": 453.7,
+            "Passed": 111,
+            "Failed": 152,
+            "Correct": 7,
+            "Amount of answers": 40,
+            "Success Rate": 17.5,
+            "Pass@1": 17.5
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

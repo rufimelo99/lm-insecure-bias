@@ -1,0 +1,12 @@
+{% for message in messages %}
+    {% set content = message['content'] %}
+
+    {% if message['role'] == 'system' %}
+        {{'<<SYS>>\n' + content + '\n<</SYS>>\n\n' }}
+    {% elif message['role'] == 'user' %}
+        {{bos_token + '[INST] ' + content + ' [/INST]' }}
+
+    {% elif message['role'] == 'assistant' %}
+        {{' '  + content + ' ' + eos_token}}
+    {% endif %}
+{% endfor %}

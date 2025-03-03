@@ -1,0 +1,88 @@
+{
+      "instruction": [
+            {
+                  "Name": "HumanEval",
+                  "Model name": "CodeLlama-13B-Instruct-GPTQ",
+                  "Area": "CodeGen",
+                  "Total time": 472.0,
+                  "Maximum memory usage (GB)": 8.63,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 35,
+                              "Other errors": 0,
+                              "Generation time (sec)": 420.1,
+                              "Tokens generated": 17146,
+                              "Average tokens per answer": 104.54878048780488,
+                              "Passed": 73,
+                              "Failed": 91,
+                              "Correct": 73,
+                              "Amount of answers": 164,
+                              "Success Rate": 44.5,
+                              "Pass@1": 44.5
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 400,
+                        "do_sample": false
+                  }
+            },
+            {
+                  "Name": "QuixBugs Java",
+                  "Model name": "CodeLlama-13B-Instruct-GPTQ",
+                  "Area": "APR",
+                  "Total time": 592.8,
+                  "Maximum memory usage (GB)": 9.46,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 5,
+                              "Other errors": 0,
+                              "Generation time (sec)": 496.3,
+                              "Tokens generated": 21789,
+                              "Average tokens per answer": 544.725,
+                              "Passed": 81,
+                              "Failed": 156,
+                              "Correct": 5,
+                              "Amount of answers": 40,
+                              "Success Rate": 12.5,
+                              "Pass@1": 12.5
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 800,
+                        "do_sample": false
+                  }
+            },
+            {
+                  "Name": "QuixBugs Python",
+                  "Model name": "CodeLlama-13B-Instruct-GPTQ",
+                  "Area": "APR",
+                  "Total time": 538.1,
+                  "Maximum memory usage (GB)": 9.56,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 0,
+                              "Other errors": 1,
+                              "Generation time (sec)": 467.8,
+                              "Tokens generated": 20403,
+                              "Average tokens per answer": 510.075,
+                              "Passed": 134,
+                              "Failed": 135,
+                              "Correct": 10,
+                              "Amount of answers": 40,
+                              "Success Rate": 25.0,
+                              "Pass@1": 25.0
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 1000,
+                        "do_sample": false
+                  }
+            }
+      ]
+}

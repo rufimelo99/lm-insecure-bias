@@ -1,0 +1,25 @@
+{
+    "Name": "QuixBugs Java",
+    "Model name": "Llama-2-7B-Chat-GPTQ",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 17.09,
+    "Syntax errors": 21,
+    "Other errors": 0,
+    "Total time (sec)": 469.7,
+    "Testing time (sec)": 59.0,
+    "Generation time (sec)": 410.7,
+    "Tokens generated": 25473,
+    "Average tokens per answer": 636.8,
+    "Tokens/Sec": 62.0,
+    "Passed": 24,
+    "Failed": 107,
+    "Correct": 1,
+    "Amount of answers": 40,
+    "Pass@1": 2.5,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

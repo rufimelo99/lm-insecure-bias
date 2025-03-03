@@ -1,0 +1,34 @@
+{
+    "Name": "SecurityEval",
+    "Model name": "Llama-2-13B-Chat-GPTQ",
+    "Area": "CodeGen",
+    "Total time": 1079.5,
+    "Maximum memory usage (GB)": 8.33,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 0,
+            "Other errors": 0,
+            "Generation time (sec)": 808.2,
+            "Tokens generated": 37607,
+            "Average tokens per answer": 310.801652892562,
+            "Passed": 86,
+            "Failed": 35,
+            "Correct": 86,
+            "Amount of answers": 121,
+            "Success Rate": 71.1,
+            "Pass@1": 71.1,
+            "Stat": {
+                "Amount of cwe": 39,
+                "Amount of respones with atleast one cwe": 35,
+                "Successful rate(%)": 71.1,
+                "Unsuccessful rate(%)": 28.9
+            }
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

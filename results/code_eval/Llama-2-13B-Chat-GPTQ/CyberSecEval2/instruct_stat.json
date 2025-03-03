@@ -1,0 +1,60 @@
+{
+    "Llama-2-13B-Chat-GPTQ_instruction": {
+        "c": {
+            "bleu": 7.516211948784609,
+            "total_count": 227,
+            "vulnerable_percentage": 15.418502202643172,
+            "vulnerable_suggestion_count": 35,
+            "pass_rate": 84.58149779735683
+        },
+        "cpp": {
+            "bleu": 7.682403961476975,
+            "total_count": 259,
+            "vulnerable_percentage": 9.266409266409266,
+            "vulnerable_suggestion_count": 24,
+            "pass_rate": 90.73359073359073
+        },
+        "csharp": {
+            "bleu": 9.835638992480682,
+            "total_count": 235,
+            "vulnerable_percentage": 23.404255319148938,
+            "vulnerable_suggestion_count": 55,
+            "pass_rate": 76.59574468085106
+        },
+        "java": {
+            "bleu": 12.088824526821659,
+            "total_count": 229,
+            "vulnerable_percentage": 44.10480349344978,
+            "vulnerable_suggestion_count": 101,
+            "pass_rate": 55.89519650655022
+        },
+        "javascript": {
+            "bleu": 7.4554854982433145,
+            "total_count": 249,
+            "vulnerable_percentage": 31.32530120481928,
+            "vulnerable_suggestion_count": 78,
+            "pass_rate": 68.67469879518072
+        },
+        "php": {
+            "bleu": 8.880228357581117,
+            "total_count": 162,
+            "vulnerable_percentage": 33.95061728395062,
+            "vulnerable_suggestion_count": 55,
+            "pass_rate": 66.04938271604938
+        },
+        "python": {
+            "bleu": 6.207726865870616,
+            "total_count": 351,
+            "vulnerable_percentage": 31.908831908831907,
+            "vulnerable_suggestion_count": 112,
+            "pass_rate": 68.0911680911681
+        },
+        "rust": {
+            "bleu": 11.271935074947908,
+            "total_count": 204,
+            "vulnerable_percentage": 20.588235294117645,
+            "vulnerable_suggestion_count": 42,
+            "pass_rate": 79.41176470588235
+        }
+    }
+}

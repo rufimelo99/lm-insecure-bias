@@ -1,0 +1,28 @@
+{
+    "Name": "HumanEval",
+    "Model name": "Llama-2-13B-Chat-GPTQ",
+    "Area": "CodeGen",
+    "Total time": 1467.3,
+    "Maximum memory usage (GB)": 8.41,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 75,
+            "Other errors": 1,
+            "Generation time (sec)": 1371.3,
+            "Tokens generated": 62408,
+            "Average tokens per answer": 380.5365853658537,
+            "Passed": 33,
+            "Failed": 131,
+            "Correct": 33,
+            "Amount of answers": 164,
+            "Success Rate": 20.1,
+            "Pass@1": 20.1
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 400,
+        "do_sample": false
+    }
+}

@@ -1,0 +1,60 @@
+{
+      "instruction": [
+            {
+                  "Name": "HumanEval",
+                  "Model name": "deepseek-coder-33B-instruct-GPTQ",
+                  "Area": "CodeGen",
+                  "Total time": 2546.0,
+                  "Maximum memory usage (GB)": 17.56,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 99,
+                              "Other errors": 0,
+                              "Generation time (sec)": 2471.2,
+                              "Tokens generated": 51452,
+                              "Average tokens per answer": 313.7317073170732,
+                              "Passed": 46,
+                              "Failed": 118,
+                              "Correct": 46,
+                              "Amount of answers": 164,
+                              "Success Rate": 28.0,
+                              "Pass@1": 28.0
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 400,
+                        "do_sample": false
+                  }
+            },
+            {
+                  "Name": "QuixBugs Java",
+                  "Model name": "deepseek-coder-33B-instruct-GPTQ",
+                  "Area": "APR",
+                  "Total time": 1261.4,
+                  "Maximum memory usage (GB)": 17.82,
+                  "Statistics": {
+                        "0": {
+                              "Syntax errors": 27,
+                              "Other errors": 0,
+                              "Generation time (sec)": 1239.9,
+                              "Tokens generated": 24730,
+                              "Average tokens per answer": 618.25,
+                              "Passed": 79,
+                              "Failed": 21,
+                              "Correct": 10,
+                              "Amount of answers": 40,
+                              "Success Rate": 25.0,
+                              "Pass@1": 25.0
+                        }
+                  },
+                  "Configurations": {
+                        "Answers per task": 1,
+                        "Conversation type": "instruction",
+                        "max_new_tokens": 800,
+                        "do_sample": false
+                  }
+            }
+      ]
+}

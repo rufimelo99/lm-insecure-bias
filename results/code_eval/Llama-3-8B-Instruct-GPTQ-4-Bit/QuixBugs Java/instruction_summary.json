@@ -1,0 +1,28 @@
+{
+    "Name": "QuixBugs Java",
+    "Model name": "Llama-3-8B-Instruct-GPTQ-4-Bit",
+    "Area": "APR",
+    "Total time": 413.4,
+    "Maximum memory usage (GB)": 7.05,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 8,
+            "Other errors": 0,
+            "Generation time (sec)": 342.0,
+            "Tokens generated": 18536,
+            "Average tokens per answer": 463.4,
+            "Passed": 102,
+            "Failed": 110,
+            "Correct": 9,
+            "Amount of answers": 40,
+            "Success Rate": 22.5,
+            "Pass@1": 22.5
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

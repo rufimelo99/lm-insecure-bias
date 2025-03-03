@@ -1,0 +1,25 @@
+{
+    "Name": "QuixBugs Python",
+    "Model name": "deepseek-coder-1.3B-instruct-GPTQ",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 1.48,
+    "Syntax errors": 1,
+    "Other errors": 2,
+    "Total time (sec)": 251.4,
+    "Testing time (sec)": 126.8,
+    "Generation time (sec)": 124.6,
+    "Tokens generated": 13508,
+    "Average tokens per answer": 337.7,
+    "Tokens/Sec": 108.4,
+    "Passed": 151,
+    "Failed": 107,
+    "Correct": 13,
+    "Amount of answers": 40,
+    "Pass@1": 32.5,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

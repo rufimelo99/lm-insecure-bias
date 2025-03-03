@@ -1,0 +1,25 @@
+{
+    "Name": "QuixBugs Python",
+    "Model name": "Llama-2-13B-Chat-GPTQ",
+    "Area": "APR",
+    "Maximum memory usage (GB)": 9.18,
+    "Syntax errors": 9,
+    "Other errors": 3,
+    "Total time (sec)": 677.1,
+    "Testing time (sec)": 187.3,
+    "Generation time (sec)": 489.8,
+    "Tokens generated": 21298,
+    "Average tokens per answer": 532.5,
+    "Tokens/Sec": 43.5,
+    "Passed": 62,
+    "Failed": 119,
+    "Correct": 2,
+    "Amount of answers": 40,
+    "Pass@1": 5.0,
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 1000,
+        "do_sample": false
+    }
+}

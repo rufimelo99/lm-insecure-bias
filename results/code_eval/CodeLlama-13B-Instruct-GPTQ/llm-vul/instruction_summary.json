@@ -1,0 +1,28 @@
+{
+    "Name": "llm-vul",
+    "Model name": "CodeLlama-13B-Instruct-GPTQ",
+    "Area": "APR",
+    "Total time": 3057.3,
+    "Maximum memory usage (GB)": 12.86,
+    "Statistics": {
+        "0": {
+            "Syntax errors": 0,
+            "Other errors": 53,
+            "Generation time (sec)": 1706.8,
+            "Tokens generated": 68408,
+            "Average tokens per answer": 743.5652173913044,
+            "Passed": 16652,
+            "Failed": 59,
+            "Correct": 4,
+            "Amount of answers": 92,
+            "Success Rate": 4.3,
+            "Pass@1": 4.3
+        }
+    },
+    "Configurations": {
+        "Answers per task": 1,
+        "Conversation type": "instruction",
+        "max_new_tokens": 2000,
+        "do_sample": false
+    }
+}

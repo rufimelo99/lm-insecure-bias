@@ -1,0 +1,7 @@
+{
+    "prompt_template": "<PRE> {prefix} <SUF>{suffix} <MID>",
+    "answer_template": "{prefix}{answer}{suffix}",
+    "tokens_to_remove": ["<|eot_id|>"],
+    "terminators": ["<|eot_id|>"],
+    "use_system_message": true
+}
