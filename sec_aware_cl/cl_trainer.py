@@ -3,6 +3,7 @@ from typing import Callable, Optional, Union
 import datasets
 import torch
 from datasets import Dataset, IterableDataset
+from jaxtyping import Float, Integer
 from torch.utils.data import DataLoader
 from transformers import (
     BaseImageProcessor,
@@ -39,15 +40,20 @@ class OurCLTrainer(SFTTrainer):
         formatting_func: Optional[Callable[[dict], str]],
         dataset_name: str,
     ) -> Union[Dataset, IterableDataset]:
-
+        logger.info(f"Preparing dataset {dataset_name}")
         # We need to map so we have "code_0", "code_1", and "label" keys
 
         def tokenize(example, processing_class, dataset_text_field):
             return processing_class(example[dataset_text_field])
 
-        def tokenize_function(examples):
-            tokenized_0 = tokenize(examples, processing_class, "code_0")
-            tokenized_1 = tokenize(examples, processing_class, "code_1")
+        def tokenize_function(examples: dict):
+            # Currently they have different shapes because I am yet to padd. Their sequence lengths are different.
+            tokenized_0: Integer[torch.Tensor, "seq_len1"] = tokenize(
+                examples, processing_class, "code_0"
+            )
+            tokenized_1: Integer[torch.Tensor, "seq_len2"] = tokenize(
+                examples, processing_class, "code_1"
+            )
 
             return {
                 "code_0": tokenized_0["input_ids"],  # Extracting as a list
@@ -71,6 +77,7 @@ class OurCLTrainer(SFTTrainer):
 
         Subclass and override this method if you want to inject some custom behavior.
         """
+        logger.info("Creating dataloader")
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
 
@@ -108,6 +115,7 @@ class OurCLTrainer(SFTTrainer):
 
         Subclass and override for custom behavior.
         """
+        logger.info("Computing loss")
         if self.model_accepts_loss_kwargs:
             loss_kwargs = {}
             if num_items_in_batch is not None:
@@ -122,12 +130,14 @@ class OurCLTrainer(SFTTrainer):
             }
         
         """
-        # Compute constrative loss
-        labels = inputs.pop("sim")
-        labels = torch.tensor([labels], dtype=torch.float16, device=model.device)
+        # Computes the constrative loss.
+        labels: Float[torch.Tensor, ""] = inputs.pop("sim")
+        labels: Float[torch.Tensor, "batch"] = torch.tensor(
+            [labels], dtype=torch.float16, device=model.device
+        )
 
-        code_0 = inputs.pop("code_0")
-        code_1 = inputs.pop("code_1")
+        code_0: Integer[torch.Tensor, "seq_len1"] = inputs.pop("code_0")
+        code_1: Integer[torch.Tensor, "seq_len1"] = inputs.pop("code_1")
 
         from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 
@@ -141,14 +151,20 @@ class OurCLTrainer(SFTTrainer):
             output_hidden_states=True,
         )
 
-        # Retrive the last hidden state
-        # [seq_len, hidden_size]
-        outputs_0 = outputs_0.hidden_states[-1]
-        outputs_1 = outputs_1.hidden_states[-1]
+        # Retrive the last hidden state.
+        outputs_0: Float[torch.Tensor, "seq_len1, hidden_size"] = (
+            outputs_0.hidden_states[-1]
+        )
+        outputs_1: Float[torch.Tensor, "seq_len2, hidden_size"] = (
+            outputs_1.hidden_states[-1]
+        )
 
-        # [hidden_size]
-        mean_pooled_embeddings_0 = torch.mean(outputs_0, dim=0)
-        mean_pooled_embeddings_1 = torch.mean(outputs_1, dim=0)
+        mean_pooled_embeddings_0: Float[torch.Tensor, "hidden_size"] = torch.mean(
+            outputs_0, dim=0
+        )
+        mean_pooled_embeddings_1: Float[torch.Tensor, "hidden_size"] = torch.mean(
+            outputs_1, dim=0
+        )
 
         def constrative_loss(outputs_0, outputs_1, labels):
             # Compute constrative loss

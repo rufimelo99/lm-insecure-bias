@@ -21,9 +21,6 @@ set_seed(1234)
 
 
 def main(model, dataset):
-    breakpoint()
-
-    model_id = model
     model_name = model
     dataset_name = dataset
     dataset_split = "train"
@@ -63,7 +60,7 @@ def main(model, dataset):
         "up_proj",
     ]
     dataset = load_dataset(dataset_name, split=dataset_split)
-    tokenizer_id = model_id
+    tokenizer_id = model_name
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
     tokenizer.padding_side = "right"  # to prevent warnings
 
@@ -81,8 +78,11 @@ def main(model, dataset):
             "label": 0,
         }
 
+    # TODO: Crop the dataset to 4 entries for testing
+    dataset = dataset.select(range(2))
+
     dataset_cl = dataset.map(create_constractive_learning_dataset)
-    dataset_cl = dataset_cl.train_test_split(test_size=0.05, seed=1234)
+    dataset_cl = dataset_cl.train_test_split(test_size=0.5, seed=1234)
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_name, trust_remote_code=True, add_eos_token=True, use_fast=True
@@ -152,6 +152,8 @@ def main(model, dataset):
     )
     logger.info("Training model")
     trainer.train()
+    logger.info("Saving model")
+    trainer.save_model()
 
 
 if __name__ == "__main__":

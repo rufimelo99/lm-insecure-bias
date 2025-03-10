@@ -18,3 +18,4 @@ torch
 absl-py 
 nltk 
 rouge_score
+jaxtyping
