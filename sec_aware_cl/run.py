@@ -15,8 +15,6 @@ from sec_aware_cl.logger import logger
 from sec_aware_cl.cl_trainer import OurCLTrainer
 from sec_aware_cl.schemas import AvailableModels, CLSecurityDataset
 
-torch.mps.empty_cache()
-
 set_seed(1234)
 
 
@@ -25,9 +23,9 @@ def main(model, dataset):
     dataset_name = dataset
     dataset_split = "train"
 
-    # device_map = {"": 0}
+    device_map = {"": 0}
     # TODO: change this. map to cpu
-    device_map = {"": "cpu"}
+    #device_map = {"": "cpu"}
 
     use_4bit = True
     bnb_4bit_compute_dtype = "bfloat16"
@@ -102,7 +100,7 @@ def main(model, dataset):
         model_name,
         torch_dtype=compute_dtype,
         trust_remote_code=True,
-        # quantization_config=bnb_config,
+        quantization_config=bnb_config,
         device_map=device_map,
         attn_implementation=attn_implementation,
     )
@@ -120,10 +118,10 @@ def main(model, dataset):
         save_strategy="epoch",
         logging_steps=100,
         learning_rate=1e-4,
-        # fp16 = not torch.cuda.is_bf16_supported(),
-        # bf16 = torch.cuda.is_bf16_supported(),
-        fp16=False,
-        bf16=True,
+        fp16 = not torch.cuda.is_bf16_supported(),
+        bf16 = torch.cuda.is_bf16_supported(),
+        # fp16=False,
+        # bf16=True,
         eval_steps=100,
         num_train_epochs=3,
         warmup_ratio=0.1,
@@ -137,7 +135,7 @@ def main(model, dataset):
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         task_type=TaskType.FEATURE_EXTRACTION,
-        # target_modules=target_modules,
+        target_modules=target_modules,
     )
 
     trainer = OurCLTrainer(
