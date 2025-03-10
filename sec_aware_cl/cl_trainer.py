@@ -16,7 +16,7 @@ from transformers.utils import is_datasets_available
 from trl import SFTTrainer
 from trl.trainer.sft_config import SFTConfig
 
-from sec_aware_cl import logger
+from sec_aware_cl.logger import logger
 
 
 class OurCLTrainer(SFTTrainer):

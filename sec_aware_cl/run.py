@@ -11,7 +11,7 @@ from transformers import (
     set_seed,
 )
 
-from sec_aware_cl import logger
+from sec_aware_cl.logger import logger
 from sec_aware_cl.cl_trainer import OurCLTrainer
 from sec_aware_cl.schemas import AvailableModels, CLSecurityDataset
 
