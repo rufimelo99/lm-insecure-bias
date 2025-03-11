@@ -18,6 +18,8 @@ from trl.trainer.sft_config import SFTConfig
 
 from sec_aware_cl.logger import logger
 
+MAX_LENGTH = 518
+
 
 class OurCLTrainer(SFTTrainer):
 
@@ -44,17 +46,27 @@ class OurCLTrainer(SFTTrainer):
         # We need to map so we have "code_0", "code_1", and "label" keys
 
         def tokenize(example, processing_class, dataset_text_field):
-            return processing_class(example[dataset_text_field])
+            return processing_class(
+                example[dataset_text_field],
+                truncation=True,
+                max_length=MAX_LENGTH,
+                padding="max_length",
+            )
 
         def tokenize_function(examples: dict):
             # Currently they have different shapes because I am yet to padd. Their sequence lengths are different.
             tokenized_0: Integer[torch.Tensor, "seq_len1"] = tokenize(
-                examples, processing_class, "code_0"
+                examples,
+                processing_class,
+                "code_0",
             )
             tokenized_1: Integer[torch.Tensor, "seq_len2"] = tokenize(
-                examples, processing_class, "code_1"
+                examples,
+                processing_class,
+                "code_1",
             )
-
+            assert len(tokenized_0["input_ids"][0]) == MAX_LENGTH
+            assert len(tokenized_1["input_ids"][0]) == MAX_LENGTH
             return {
                 "code_0": tokenized_0["input_ids"],  # Extracting as a list
                 "code_1": tokenized_1["input_ids"],  # Extracting as a list
@@ -122,18 +134,11 @@ class OurCLTrainer(SFTTrainer):
                 loss_kwargs["num_items_in_batch"] = num_items_in_batch
             inputs = {**inputs, **loss_kwargs}
 
-        """
-        return {
-                "code_0": tokenized_0["input_ids"],  # Extracting as a list
-                "code_1": tokenized_1["input_ids"],  # Extracting as a list
-                "sim": [1] * len(examples["code_0"])  # Ensuring `label` is a list
-            }
-        
-        """
         # Computes the constrative loss.
         labels: Float[torch.Tensor, ""] = inputs.pop("sim")
         labels: Float[torch.Tensor, "batch"] = torch.tensor(
-            [labels], dtype=torch.float16, device=model.device
+            [labels],
+            dtype=torch.long,
         )
 
         code_0: Integer[torch.Tensor, "seq_len1"] = inputs.pop("code_0")
@@ -143,11 +148,14 @@ class OurCLTrainer(SFTTrainer):
 
         # TODO: We might want to look into padding, so we can have a single tensor
         outputs_0: CausalLMOutputWithCrossAttentions = model(
-            torch.tensor(code_0, dtype=torch.long, device=model.device),
+            input_ids=torch.tensor(
+                [code_0],
+                dtype=torch.long,
+            ),
             output_hidden_states=True,
         )
         outputs_1: CausalLMOutputWithCrossAttentions = model(
-            torch.tensor(code_1, dtype=torch.long, device=model.device),
+            input_ids=torch.tensor([code_1], dtype=torch.long),
             output_hidden_states=True,
         )
 
@@ -175,6 +183,7 @@ class OurCLTrainer(SFTTrainer):
                 outputs_0, outputs_1, dim=0
             ).unsqueeze(0)
             # Compute constrative loss
+            labels = labels.to(sim.device)
             loss = torch.nn.functional.cross_entropy(sim, labels)
             return loss
 

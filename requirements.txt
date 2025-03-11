@@ -14,8 +14,10 @@ accelerate
 datasets 
 trl 
 torch 
-flash_attn
+# flash_attn
 absl-py 
 nltk 
 rouge_score
 jaxtyping
+peft
+datasets

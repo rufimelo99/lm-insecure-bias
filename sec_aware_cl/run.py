@@ -2,7 +2,7 @@ import argparse
 
 import torch
 from datasets import load_dataset
-from peft import LoraConfig, TaskType, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -11,11 +11,19 @@ from transformers import (
     set_seed,
 )
 
-from sec_aware_cl.logger import logger
 from sec_aware_cl.cl_trainer import OurCLTrainer
+from sec_aware_cl.logger import logger
 from sec_aware_cl.schemas import AvailableModels, CLSecurityDataset
 
 set_seed(1234)
+
+
+def create_constractive_learning_dataset(row):
+    return {
+        "code_0": f"{row['func_before']}",
+        "code_1": f"{row['func_after']}",
+        "label": 0,
+    }
 
 
 def main(model, dataset):
@@ -24,43 +32,23 @@ def main(model, dataset):
     dataset_split = "train"
 
     device_map = {"": 0}
-    # TODO: change this. map to cpu
-    #device_map = {"": "cpu"}
+    # device_map={'':torch.cuda.current_device()}
 
-    use_4bit = True
-    bnb_4bit_compute_dtype = "bfloat16"
-
-    # 'bnb_4bit_quant_type' is the type of quantization that should be used for the 4-bit base model. In this case, it is set to 'nf4'.
-    bnb_4bit_quant_type = "nf4"
-
-    # 'use_double_quant' is a boolean that controls whether nested quantization should be used for the 4-bit base model.
-    use_double_quant = True
-
-    # LoRA configuration for the model
-
-    # 'lora_r' is the dimension of the LoRA attention.
-    lora_r = 16
-
-    # 'lora_alpha' is the alpha parameter for LoRA scaling.
-    lora_alpha = 16
-
-    # 'lora_dropout' is the dropout probability for LoRA layers.
-    lora_dropout = 0.05
-
-    # 'target_modules' is a list of the modules that should be targeted by LoRA.
-    target_modules = [
-        "k_proj",
-        "q_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "down_proj",
-        "up_proj",
-    ]
     dataset = load_dataset(dataset_name, split=dataset_split)
     tokenizer_id = model_name
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
     tokenizer.padding_side = "right"  # to prevent warnings
+
+    # You can use a different max length if your custom dataset has shorter/longer input sequences.
+    MAX_LENGTH = 256
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        trust_remote_code=True,
+        add_eos_token=True,
+        use_fast=False,
+    )
+    tokenizer.pad_token = tokenizer.eos_token
 
     if torch.cuda.is_bf16_supported():
         compute_dtype = torch.bfloat16
@@ -69,85 +57,91 @@ def main(model, dataset):
         compute_dtype = torch.float16
         attn_implementation = "sdpa"
 
-    def create_constractive_learning_dataset(row):
-        return {
-            "code_0": f"{row['func_before']}",
-            "code_1": f"{row['func_after']}",
-            "label": 0,
-        }
-
     # TODO: Crop the dataset to 4 entries for testing
     dataset = dataset.select(range(2))
-
     dataset_cl = dataset.map(create_constractive_learning_dataset)
     dataset_cl = dataset_cl.train_test_split(test_size=0.5, seed=1234)
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name, trust_remote_code=True, add_eos_token=True, use_fast=True
-    )
-    tokenizer.pad_token = tokenizer.unk_token
-    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
-    tokenizer.padding_side = "left"
-
     bnb_config = BitsAndBytesConfig(
-        load_in_4bit=use_4bit,
-        bnb_4bit_quant_type=bnb_4bit_quant_type,
-        bnb_4bit_compute_dtype=compute_dtype,
-        bnb_4bit_use_double_quant=use_double_quant,
+        # Load the model with 4-bit quantization
+        load_in_4bit=True,
+        # Use double quantization
+        bnb_4bit_use_double_quant=True,
+        # Use 4-bit Normal Float for storing the base model weights in GPU memory
+        bnb_4bit_quant_type="nf4",
+        # De-quantize the weights to 16-bit (Brain) float before the forward/backward pass
+        bnb_4bit_compute_dtype=torch.bfloat16,
     )
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=compute_dtype,
         trust_remote_code=True,
         quantization_config=bnb_config,
         device_map=device_map,
-        attn_implementation=attn_implementation,
+        # attn_implementation=attn_implementation,
     )
 
+    model.gradient_checkpointing_enable()
     model = prepare_model_for_kbit_training(model)
+
+    peft_config = LoraConfig(
+        task_type="CAUSAL_LM",
+        # This is the rank of the decomposed matrices A and B to be learned during fine-tuning. A smaller number will save more GPU memory but might result in worse performance.
+        r=32,
+        # This is the coefficient for the learned ΔW factor, so the larger number will typically result in a larger behavior change after fine-tuning.
+        lora_alpha=64,
+        # Drop out ratio for the layers in LoRA adaptors A and B.
+        lora_dropout=0.1,
+        # We fine-tune all linear layers in the model. It might sound a bit large, but the trainable adapter size is still only **1.16%** of the whole model.
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+            "lm_head",
+        ],
+        # Bias parameters to train. 'none' is recommended to keep the original model performing equally when turning off the adapter.
+        bias="none",
+    )
+
+    peft_model = get_peft_model(model, peft_config)
+    peft_model.print_trainable_parameters()
+
     args = TrainingArguments(
         output_dir="./our_cool_model",
         evaluation_strategy="steps",
         do_eval=True,
-        optim="adamw_torch",
-        per_device_train_batch_size=1,
+        # For the following arguments, refer to https://huggingface.co/docs/transformers/main_classes/trainer
+        per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
-        per_device_eval_batch_size=1,
-        log_level="debug",
-        save_strategy="epoch",
+        gradient_checkpointing=True,
+        optim="paged_adamw_8bit",
+        bf16=True,
+        learning_rate=2e-5,
+        lr_scheduler_type="constant",
+        max_steps=500,
+        save_steps=100,
         logging_steps=100,
-        learning_rate=1e-4,
-        fp16 = not torch.cuda.is_bf16_supported(),
-        bf16 = torch.cuda.is_bf16_supported(),
-        # fp16=False,
-        # bf16=True,
-        eval_steps=100,
-        num_train_epochs=3,
-        warmup_ratio=0.1,
-        lr_scheduler_type="linear",
-        # report_to="wandb",
-        seed=42,
-    )
-
-    peft_config = LoraConfig(
-        r=lora_r,
-        lora_alpha=lora_alpha,
-        lora_dropout=lora_dropout,
-        task_type=TaskType.FEATURE_EXTRACTION,
-        target_modules=target_modules,
+        warmup_steps=5,
+        # https://discuss.huggingface.co/t/training-llama-with-lora-on-multiple-gpus-may-exist-bug/47005/3
+        ddp_find_unused_parameters=False,
     )
 
     trainer = OurCLTrainer(
-        model=model,
+        model=peft_model,
         train_dataset=dataset_cl["train"],
         eval_dataset=dataset_cl["test"],
         # Use constrative loss for feature extraction task
         # compute_loss_func = lambda x, y: constrative_loss(x, y),
-        peft_config=peft_config,
         tokenizer=tokenizer,
         args=args,
     )
+    # use_cache=True is incompatible with gradient checkpointing.
+    peft_model.config.use_cache = False
+
     logger.info("Training model")
     trainer.train()
     logger.info("Saving model")
