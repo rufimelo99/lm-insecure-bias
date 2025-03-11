@@ -11,6 +11,7 @@ from transformers import (
     PreTrainedTokenizerBase,
     ProcessorMixin,
 )
+from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 from transformers.trainer import seed_worker
 from transformers.utils import is_datasets_available
 from trl import SFTTrainer
@@ -143,8 +144,6 @@ class OurCLTrainer(SFTTrainer):
 
         code_0: Integer[torch.Tensor, "seq_len1"] = inputs.pop("code_0")
         code_1: Integer[torch.Tensor, "seq_len1"] = inputs.pop("code_1")
-
-        from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 
         # TODO: We might want to look into padding, so we can have a single tensor
         outputs_0: CausalLMOutputWithCrossAttentions = model(
