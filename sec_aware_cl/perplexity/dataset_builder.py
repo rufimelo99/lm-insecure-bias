@@ -57,11 +57,8 @@ def treat_dataset(directory: str):
     # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
     cwe_dict = defaultdict(str)
 
-    if not os.path.exists(os.path.join(directory, "vulnerable")):
-        os.makedirs(os.path.join(directory, "vulnerable"))
-
-    if not os.path.exists(os.path.join(directory, "safe")):
-        os.makedirs(os.path.join(directory, "safe"))
+    if not os.path.exists(os.path.join(directory, "data")):
+        os.makedirs(os.path.join(directory, "data"))
 
     def analyse_line_and_write(line, cwe_dict):
         data = json.loads(line)
@@ -75,15 +72,8 @@ def treat_dataset(directory: str):
 
         if cwe_key not in cwe_dict:
             cwe_dict[cwe_key] = cwe_key + ".jsonl"
-
-        is_vulnerable = data["target"] == 1
-        if is_vulnerable:
-            folder = "vulnerable"
-        else:
-            folder = "safe"
-
         write_jsonl(
-            data, os.path.join(directory + "/" + folder, cwe_dict[cwe_key]), append=True
+            data, os.path.join(directory + "/" + "data", cwe_dict[cwe_key]), append=True
         )
 
     with open(os.path.join(directory, "training.jsonl"), "r") as f:
