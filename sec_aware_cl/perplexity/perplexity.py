@@ -93,7 +93,7 @@ def main(model, directory, output_dir):
 
     # Open directory. It has either safe or vulnerable folders
     for folder in os.listdir(directory):
-        if folder not in ["safe", "vulnerable"]:
+        if folder not in ["data"]:
             continue
 
         for file in tqdm(os.listdir(os.path.join(directory, folder)), total=144):
