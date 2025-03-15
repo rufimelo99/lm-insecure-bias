@@ -18,17 +18,16 @@ from sec_aware_cl.schemas import AvailableModels
 
 set_seed(1234)
 
-
 def forward_pass(sentence: str, model, tokenizer):
     inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
-
+    
     device = model.module.device  # Access the underlying model's device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
-        outputs = model.module(
-            **inputs, labels=inputs["input_ids"], output_hidden_states=True
-        )
+        outputs = model.module(**inputs, labels=inputs["input_ids"], output_hidden_states=True)
     return outputs
+
+
 
 
 def get_perplexity_hidden_state(sentence, model, tokenizer):
@@ -92,7 +91,7 @@ def main(model, directory, output_dir):
     )
 
     if torch.cuda.device_count() > 1:
-        print(f"Using {torch.cuda.device_count()} GPUs")
+        logger.info("Using GPUs", count= torch.cuda.device_count())
         model = torch.nn.DataParallel(model)
 
     if not os.path.exists(output_dir):
@@ -119,7 +118,7 @@ def main(model, directory, output_dir):
                         data["func"], model, tokenizer
                     )
                     perplexity = perplexity.item()
-                    logger.info(
+                    logger.debug(
                         "Perplexity and hidden state calculated",
                         perplexity=perplexity,
                     )
