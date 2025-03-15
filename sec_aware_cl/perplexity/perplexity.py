@@ -21,10 +21,13 @@ set_seed(1234)
 
 def forward_pass(sentence: str, model, tokenizer):
     inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
-    # move to the correct device
-    inputs = {name: tensor.to(model.device) for name, tensor in inputs.items()}
+
+    device = model.module.device  # Access the underlying model's device
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
-        outputs = model(**inputs, labels=inputs["input_ids"], output_hidden_states=True)
+        outputs = model.module(
+            **inputs, labels=inputs["input_ids"], output_hidden_states=True
+        )
     return outputs
 
 
@@ -87,6 +90,10 @@ def main(model, directory, output_dir):
         device_map=device_map,
         # attn_implementation=attn_implementation,
     )
+
+    if torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs")
+        model = torch.nn.DataParallel(model)
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
