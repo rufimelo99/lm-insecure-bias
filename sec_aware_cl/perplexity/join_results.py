@@ -9,36 +9,24 @@ from sec_aware_cl.perplexity.perplexity import write_jsonl
 
 
 def merge_results(directory1, directory2, output_dir):
-    for folder in os.listdir(directory1):
-        if folder not in ["data"]:
-            continue
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-        for file in tqdm(os.listdir(os.path.join(directory1, folder)), total=144):
+    for file in tqdm(os.listdir(os.path.join(directory1)), total=144):
 
-            cwe = file.split(".")[0]
-            vulnerable_perplexities = []
-            safe_perplexities = []
+        cwe = file.split(".")[0]
 
-            with open(os.path.join(directory1, folder, file), "r") as f:
-                for line in f:
-                    data = json.loads(line)
+        with open(os.path.join(directory1, file), "r") as f:
+            for line in f:
+                data = json.loads(line)
 
-                    vulnerable_perplexities.extend(data["vulnerable"])
-                    safe_perplexities.extend(data["safe"])
+                write_jsonl(data, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
 
-            with open(os.path.join(directory2, folder, file), "r") as f:
-                for line in f:
-                    data = json.loads(line)
+        with open(os.path.join(directory2, file), "r") as f:
+            for line in f:
+                data = json.loads(line)
 
-                    vulnerable_perplexities.extend(data["vulnerable"])
-                    safe_perplexities.extend(data["safe"])
-
-            results = {
-                "cwe": cwe,
-                "vulnerable": vulnerable_perplexities,
-                "safe": safe_perplexities,
-            }
-            write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
+                write_jsonl(data, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
 
 
 if __name__ == "__main__":
