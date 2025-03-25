@@ -120,6 +120,30 @@ def treat_asleep_dataset(directory: str):
 
         data = {"cwe": [cwe], "func": entry["prompt"], "target": 1}
         filename = cwe + ".jsonl"
+        write_jsonl(data, os.path.join(directory + "/" + "data", filename), append=True)
+
+
+def get_security_eval_cwe_label(asleep_entry):
+    id = asleep_entry["ID"]
+
+    id = id.lower()
+    try:
+        cwe = int(id.split("cwe-")[1].split("_")[0])
+        cwe = f"CWE-{cwe}"
+        return cwe
+    except:
+        return
+
+
+def treat_security_eval_dataset(directory: str):
+    ds = load_dataset("s2e-lab/SecurityEval")
+    for entry in ds["train"]:
+        cwe = get_security_eval_cwe_label(entry)
+        if not cwe:
+            continue
+
+        data = {"cwe": cwe, "func": entry["Insecure_code"], "target": 1}
+        filename = cwe + ".jsonl"
         logger.info("Writing data to file.", filename=filename)
         write_jsonl(data, os.path.join(directory + "/" + "data", filename), append=True)
 
@@ -139,6 +163,12 @@ if __name__ == "__main__":
     dataset = PrimeVul()  # Create an instance of PrimeVul
     download_dataset(dataset, args.directory)
     treat_dataset(args.directory)
+
     treat_asleep_dataset(args.directory)
+
+    treat_security_eval_dataset(args.directory)
+
+
+    
 
     logger.info("Dataset downloaded and treated.", directory=args.directory)

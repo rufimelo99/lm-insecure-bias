@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 
 from sec_aware_cl.perplexity.perplexity import write_jsonl
+from sec_aware_cl.logger import logger
 
 
 def merge_results(directory1, directory2, output_dir):
@@ -26,7 +27,6 @@ def merge_results(directory1, directory2, output_dir):
                 seen.add(model)
 
                 write_jsonl(data, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
-
         with open(os.path.join(directory2, file), "r") as f:
             for line in f:
                 data = json.loads(line)
