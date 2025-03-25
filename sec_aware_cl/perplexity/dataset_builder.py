@@ -5,6 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 import gdown
+from datasets import load_dataset
 from tqdm import tqdm
 
 from sec_aware_cl.logger import logger
@@ -63,6 +64,12 @@ def treat_dataset(directory: str):
     def analyse_line_and_write(line, cwe_dict):
         data = json.loads(line)
 
+        data = {
+            "cwe": data["cwe"],
+            "func": data["func"],
+            "target": data["target"],
+        }
+
         cwe_key = data["cwe"]
 
         if len(cwe_key) > 1:
@@ -89,6 +96,34 @@ def treat_dataset(directory: str):
             analyse_line_and_write(line, cwe_dict)
 
 
+def get_asleep_cwe_label(asleep_entry):
+    check_ql = asleep_entry["check_ql"]
+    if not check_ql:
+        return
+
+    check_ql = check_ql.lower()
+    try:
+        cwe = int(check_ql.split("cwe-")[1].split("/")[0])
+        cwe = f"CWE-{cwe}"
+        return cwe
+    except:
+        return None
+
+
+def treat_asleep_dataset(directory: str):
+    asleep_data = load_dataset("moyix/asleep_keyboard", "DoW")
+
+    for entry in asleep_data["test"]:
+        cwe = get_asleep_cwe_label(entry)
+        if not cwe:
+            continue
+
+        data = {"cwe": [cwe], "func": entry["prompt"], "target": 1}
+        filename = cwe + ".jsonl"
+        logger.info("Writing data to file.", filename=filename)
+        write_jsonl(data, os.path.join(directory + "/" + "data", filename), append=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download PrimeVul dataset")
 
@@ -104,5 +139,6 @@ if __name__ == "__main__":
     dataset = PrimeVul()  # Create an instance of PrimeVul
     download_dataset(dataset, args.directory)
     treat_dataset(args.directory)
+    treat_asleep_dataset(args.directory)
 
     logger.info("Dataset downloaded and treated.", directory=args.directory)
