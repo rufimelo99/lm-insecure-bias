@@ -16,15 +16,24 @@ def merge_results(directory1, directory2, output_dir):
 
         cwe = file.split(".")[0]
 
+        seen = set()
         with open(os.path.join(directory1, file), "r") as f:
             for line in f:
                 data = json.loads(line)
+                model = data["model"]
+                if model in seen:
+                    continue
+                seen.add(model)
 
                 write_jsonl(data, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
 
         with open(os.path.join(directory2, file), "r") as f:
             for line in f:
                 data = json.loads(line)
+                model = data["model"]
+                if model in seen:
+                    continue
+                seen.add(model)
 
                 write_jsonl(data, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
 
