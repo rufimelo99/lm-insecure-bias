@@ -168,7 +168,4 @@ if __name__ == "__main__":
 
     treat_security_eval_dataset(args.directory)
 
-
-    
-
     logger.info("Dataset downloaded and treated.", directory=args.directory)

@@ -9,7 +9,7 @@ class AvailableModels(str, Enum):
     vicuna7 = "lmsys/vicuna-7b-v1.5"
     vicuna13 = "lmsys/vicuna-13b-v1.5"
     dscoder7 = "deepseek-ai/deepseek-coder-6.7b-base"
-    dscoder7_inst =  "deepseek-ai/deepseek-coder-6.7b-instruct"
+    dscoder7_inst = "deepseek-ai/deepseek-coder-6.7b-instruct"
     codet5_plus = "Salesforce/codet5p-16b"
     codet5_plus_inst = "Salesforce/codet5p-16b-instruct"
 

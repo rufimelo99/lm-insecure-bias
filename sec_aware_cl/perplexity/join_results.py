@@ -5,8 +5,8 @@ import os
 
 from tqdm import tqdm
 
-from sec_aware_cl.perplexity.perplexity import write_jsonl
 from sec_aware_cl.logger import logger
+from sec_aware_cl.perplexity.perplexity import write_jsonl
 
 
 def merge_results(directory1, directory2, output_dir):
@@ -23,6 +23,7 @@ def merge_results(directory1, directory2, output_dir):
                 data = json.loads(line)
                 model = data["model"]
                 if model in seen:
+                    logger.warning(f"Model {model} already seen for {cwe}")
                     continue
                 seen.add(model)
 
@@ -32,6 +33,7 @@ def merge_results(directory1, directory2, output_dir):
                 data = json.loads(line)
                 model = data["model"]
                 if model in seen:
+                    logger.warning(f"Model {model} already seen for {cwe}")
                     continue
                 seen.add(model)
 
