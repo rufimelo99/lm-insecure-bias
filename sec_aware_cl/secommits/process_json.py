@@ -11,7 +11,6 @@ from sec_aware_cl.logger import logger
 
 GITHUB_BEARER_TOKEN = os.getenv("GITHUB_BEARER_TOKEN")
 
-
 tqdm.pandas()
 
 
@@ -152,8 +151,6 @@ def main(json_path, output_path):
     df_csv = df_csv[df_csv["files"].apply(lambda x: len(x) == 1)]
 
     logger.info("Processing the data to extract vulnerable information.")
-    amount_to_skip = 547 + 2197
-    df_csv = df_csv.iloc[amount_to_skip:]
     df_csv = df_csv.reset_index(drop=True)
     # Iterate over the DataFrame rows and extract vulnerable information
     for index, row in tqdm(df_csv.iterrows(), total=df_csv.shape[0]):
@@ -169,10 +166,14 @@ def main(json_path, output_path):
         df_csv.at[index, "prior_version"] = prior_version
         df_csv.at[index, "after_version"] = after_version
 
+        row_json = row.to_dict()
+        row_json["prior_version"] = prior_version
+        row_json["after_version"] = after_version
+
         # Append to the jsonl file
         with open(output_path, "a") as f:
-            f.write(json.dumps(row.to_dict()) + "\n")
-
+            f.write(json.dumps(row_json) + "\n")
+        
     logger.info("Processing completed.")
 
 
