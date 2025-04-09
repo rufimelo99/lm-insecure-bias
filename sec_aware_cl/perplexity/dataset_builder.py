@@ -142,7 +142,7 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
             continue
         cwe_set = eval(cwe)
         for cwe in cwe_set:
-            if row["prior_version"]:
+            if row["prior_version"] and len(row["prior_version"]) > 0:
                 data = {
                     "cwe": [cwe],
                     "func": row["prior_version"],
@@ -154,7 +154,7 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
                     append=True,
                 )
 
-            if row["after_version"]:
+            if row["after_version"] and len(row["after_version"]) > 0:
                 data = {
                     "cwe": [cwe],
                     "func": row["after_version"],
