@@ -142,28 +142,30 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
             continue
         cwe_set = eval(cwe)
         for cwe in cwe_set:
-            data = {
-                "cwe": [cwe],
-                "func": row["prior_version"],
-                "target": 1,
-            }
-            write_jsonl(
-                data,
-                os.path.join(directory + "/" + "data", cwe + ".jsonl"),
-                append=True,
-            )
+            if row["prior_version"]:
+                data = {
+                    "cwe": [cwe],
+                    "func": row["prior_version"],
+                    "target": 1,
+                }
+                write_jsonl(
+                    data,
+                    os.path.join(directory + "/" + "data", cwe + ".jsonl"),
+                    append=True,
+                )
 
-            data = {
-                "cwe": [cwe],
-                "func": row["after_version"],
-                "target": 0,
-            }
+            if row["after_version"]:
+                data = {
+                    "cwe": [cwe],
+                    "func": row["after_version"],
+                    "target": 0,
+                }
 
-            write_jsonl(
-                data,
-                os.path.join(directory + "/" + "data", cwe + ".jsonl"),
-                append=True,
-            )
+                write_jsonl(
+                    data,
+                    os.path.join(directory + "/" + "data", cwe + ".jsonl"),
+                    append=True,
+                )
 
 
 def get_security_eval_cwe_label(asleep_entry):
