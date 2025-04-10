@@ -143,10 +143,14 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
         cwe_set = eval(cwe)
         for cwe in cwe_set:
             if row["prior_version"] and len(row["prior_version"]) > 0:
+                stats = eval(row["stats"])
                 data = {
                     "cwe": [cwe],
                     "func": row["prior_version"],
                     "target": 1,
+                    "additions": stats["additions"],
+                    "deletions": stats["deletions"],
+                    "total": stats["total"],
                 }
                 write_jsonl(
                     data,
@@ -159,6 +163,9 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
                     "cwe": [cwe],
                     "func": row["after_version"],
                     "target": 0,
+                    "additions": stats["additions"],
+                    "deletions": stats["deletions"],
+                    "total": stats["total"],
                 }
 
                 write_jsonl(
