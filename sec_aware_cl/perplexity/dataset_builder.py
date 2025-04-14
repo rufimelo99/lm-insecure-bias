@@ -151,6 +151,10 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
                     "additions": stats["additions"],
                     "deletions": stats["deletions"],
                     "total": stats["total"],
+                    "vuln_id": row["vuln_id"],
+                    "score": row["score"],
+                    "published_date": row["published_date"],
+                    "commit_href": row["commit_href"],
                 }
                 write_jsonl(
                     data,
@@ -166,6 +170,10 @@ def treat_seccomit_osv_dataset(file_path: str, directory: str):
                     "additions": stats["additions"],
                     "deletions": stats["deletions"],
                     "total": stats["total"],
+                    "vuln_id": row["vuln_id"],
+                    "score": row["score"],
+                    "published_date": row["published_date"],
+                    "commit_href": row["commit_href"],
                 }
 
                 write_jsonl(
