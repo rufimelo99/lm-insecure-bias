@@ -106,6 +106,7 @@ def main(model, directory, output_dir):
         for file in tqdm(os.listdir(os.path.join(directory, folder)), total=144):
 
             cwe = file.split(".")[0]
+            snippets = []
             vulnerable_perplexities = []
             safe_perplexities = []
 
@@ -131,12 +132,15 @@ def main(model, directory, output_dir):
                     else:
                         safe_perplexities.append(perplexity)
 
+                    snippets.append(data)
+
             # Save the results. # TODO: Create a basemodel for this
             results = {
                 "cwe": cwe,
                 "model": model_name,
                 "vulnerable": vulnerable_perplexities,
                 "safe": safe_perplexities,
+                "snippets": snippets,
             }
             write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
 
