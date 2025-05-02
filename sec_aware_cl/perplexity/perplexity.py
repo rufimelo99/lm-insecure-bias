@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 
 import torch
+from longppl.longppl import compute_longppl
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
@@ -31,7 +32,14 @@ def forward_pass(sentence: str, model, tokenizer):
     return outputs
 
 
-def get_perplexity_hidden_state(sentence, model, tokenizer):
+def get_perplexity_hidden_state(sentence, model, tokenizer, longppl=False):
+    if longppl:
+        evaluator_model = model
+        evaluator_tokenizer = tokenizer
+        output = compute_longppl(
+            sentence, model, evaluator_model, tokenizer, evaluator_tokenizer
+        )
+        breakpoint()
     outputs = forward_pass(sentence, model, tokenizer)
     return (
         torch.exp(outputs.loss).cpu().numpy(),
@@ -173,6 +181,13 @@ if __name__ == "__main__":
         help="The dataset to use",
         default="dataset",
         required=True,
+    )
+
+    parser.add_argument(
+        "--longppl",
+        action="store_true",
+        default=False,
+        help="Use LongPPL metric",
     )
 
     args = parser.parse_args()
