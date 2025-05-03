@@ -34,12 +34,11 @@ def forward_pass(sentence: str, model, tokenizer):
 
 def get_perplexity_hidden_state(sentence, model, tokenizer, longppl=False):
     if longppl:
-        evaluator_model = model
+        evaluator_model = model.module
         evaluator_tokenizer = tokenizer
-        output = compute_longppl(
-            sentence, model, evaluator_model, tokenizer, evaluator_tokenizer
-        )
-        breakpoint()
+        model = model.module
+        # breakpoint()
+        output = compute_longppl(sentence, model, evaluator_model, tokenizer, evaluator_tokenizer, trunc_len=258, sliding_window=124)
     outputs = forward_pass(sentence, model, tokenizer)
     return (
         torch.exp(outputs.loss).cpu().numpy(),
@@ -59,17 +58,15 @@ def write_jsonl(data: json, file_path, append=False):
         f.write(json.dumps(data) + "\n")
 
 
-def main(model, directory, output_dir):
+def main(model, directory, output_dir, longppl):
     model_name = model
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    tokenizer.padding_side = "right"  # to prevent warnings
     device_map = "auto"
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
         trust_remote_code=True,
         add_eos_token=True,
-        use_fast=False,
+        use_fast=True,
     )
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -125,7 +122,7 @@ def main(model, directory, output_dir):
                     data = json.loads(line)
 
                     perplexity, hidden_state = get_perplexity_hidden_state(
-                        data["func"], model, tokenizer
+                        data["func"], model, tokenizer, longppl
                     )
                     perplexity = perplexity.item()
                     logger.debug(
@@ -191,4 +188,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args.model, args.directory, args.output_dir)
+    main(args.model, args.directory, args.output_dir, args.longppl)
