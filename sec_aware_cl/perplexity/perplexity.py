@@ -34,11 +34,9 @@ def forward_pass(sentence: str, model, tokenizer):
 
 def get_perplexity_hidden_state(sentence, model, tokenizer, longppl=False):
     if longppl:
-        evaluator_model = model.module
-        evaluator_tokenizer = tokenizer
         model = model.module
         # breakpoint()
-        output = compute_longppl(sentence, model, evaluator_model, tokenizer, evaluator_tokenizer, trunc_len=258, sliding_window=124)
+        output = compute_longppl(sentence, model, tokenizer=tokenizer, trunc_len=258, sliding_window=124)
     outputs = forward_pass(sentence, model, tokenizer)
     return (
         torch.exp(outputs.loss).cpu().numpy(),
