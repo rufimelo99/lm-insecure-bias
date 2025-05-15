@@ -1,6 +1,10 @@
 How to run the code:
 
 cd PurpleLlama
+git submodule update --init --recursive
+
+export DATASETS=$(pwd)/CybersecurityBenchmarks/datasets/
+
 python -m CybersecurityBenchmarks.benchmark.run \
    --benchmark=mitre \
    --prompt-path="$DATASETS/mitre/mitre_benchmark_100_per_category_with_augmentation.json" \

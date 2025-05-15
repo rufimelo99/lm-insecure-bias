@@ -19,5 +19,5 @@ absl-py
 nltk 
 rouge_score
 jaxtyping
-peft
-datasets
+openai
+paramiko
