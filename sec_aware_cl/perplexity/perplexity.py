@@ -132,6 +132,24 @@ def main(model, directory, output_dir, longppl):
 
                     is_vulnerable = data["target"] == 1
 
+                    # data["model_names"] = ["WizardLMTeam/WizardCoder-15B-V1.0"]
+                    # data["in_the_stack"]= [True]
+                    in_the_stack = None
+                    if model_name not in data["model_names"]:
+                        logger.warning(
+                            "Model was not preprocessed to know if it has seen this data prior or not",
+                            model=model_name,
+                        )
+                    else:
+                        model_name_idx = data["model_names"].index(model_name)
+                        in_the_stack = data["in_the_stack"][model_name_idx]
+
+                    # remove the model_names and in_the_stack keys from the data
+                    del data["model_names"]
+                    del data["in_the_stack"]
+
+                    data["in_the_stack"] = in_the_stack
+
                     if is_vulnerable:
                         vulnerable_perplexities.append(perplexity)
                     else:
