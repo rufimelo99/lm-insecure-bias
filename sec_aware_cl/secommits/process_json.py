@@ -10,6 +10,7 @@ from tqdm import tqdm
 from sec_aware_cl.logger import logger
 
 GITHUB_BEARER_TOKEN = os.getenv("GITHUB_BEARER_TOKEN")
+GITHUB_BEARER_TOKEN = "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"
 
 tqdm.pandas()
 
@@ -124,12 +125,9 @@ def get_diff_versions_from_commit(commit, write_to_file=False):
 
         prior_output = []
         after_output = []
-
         for line in patch.splitlines():
             if not line.startswith("+"):
                 prior_output.append(line)
-
-        for line in patch.splitlines():
             if not line.startswith("-"):
                 after_output.append(line)
 
@@ -173,7 +171,7 @@ def main(json_path, output_path):
         # Append to the jsonl file
         with open(output_path, "a") as f:
             f.write(json.dumps(row_json) + "\n")
-        
+
     logger.info("Processing completed.")
 
 

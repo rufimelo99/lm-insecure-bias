@@ -36,7 +36,9 @@ def get_perplexity_hidden_state(sentence, model, tokenizer, longppl=False):
     if longppl:
         model = model.module
         # breakpoint()
-        output = compute_longppl(sentence, model, tokenizer=tokenizer, trunc_len=258, sliding_window=124)
+        output = compute_longppl(
+            sentence, model, tokenizer=tokenizer, trunc_len=258, sliding_window=124
+        )
     outputs = forward_pass(sentence, model, tokenizer)
     return (
         torch.exp(outputs.loss).cpu().numpy(),
