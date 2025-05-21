@@ -190,16 +190,17 @@ def check_stack_membership(snippet, model, is_patch, db_path="repos.duckdb"):
     in_repo = find_repo(repo, stack_version.version, db=db)
 
     # check if the commit date is before the stack version
-    if commit_date < stack_version.date:
-        if not vulnerable_version:
-            is_stack_member = in_repo
-        else:
-            is_stack_member = False
-    else:
-        if vulnerable_version:
-            is_stack_member = in_repo
-        else:
-            is_stack_member = False
+    # if commit_date < stack_version.date:
+    #     if not vulnerable_version:
+    #         is_stack_member = in_repo
+    #     else:
+    #         is_stack_member = False
+    # else:
+    #     if vulnerable_version:
+    #         is_stack_member = in_repo
+    #     else:
+    #         is_stack_member = False
+    is_stack_member = in_repo
     print(
         f"Commit date after stack version: {commit_date > stack_version.date}; Vulnerable version: {vulnerable_version}; Is stack member: {is_stack_member}; In repo: {in_repo}"
     )
