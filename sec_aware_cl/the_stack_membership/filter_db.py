@@ -3,7 +3,7 @@ import argparse
 
 from datasets import load_dataset
 from tqdm import tqdm
-
+from datasets import IterableDataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Filter the dataset")
@@ -37,12 +37,21 @@ if __name__ == "__main__":
     dataset = load_dataset("bigcode/the-stack-v2", split="train", streaming=True)
     dataset = dataset.take(10)
 
-    # Filter based on "repo_name"
+    # Collect all repo names
+    repo_names = set()
+    for example in tqdm(dataset, total=2_800_000_000):
+        repo_name = example["repo_name"].lower()
+        with open(output_projects_txt, "a") as f:
+            f.write(repo_name + "\n")
 
-    dataset = dataset.filter(
+
+    # Filter based on "repo_name"
+    dataset: IterableDataset = dataset.filter(
         lambda x: x["repo_name"].lower() in projects,
-        num_proc=8,
     )
 
-    # Save the filtered dataset
-    dataset.save_to_disk("filtered_dataset")
+    
+
+    # convert to dataset and push to hub
+    dataset = dataset.to_dataset()
+    dataset.push_to_hub("rufimelo/test")
