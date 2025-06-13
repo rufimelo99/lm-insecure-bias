@@ -21,3 +21,4 @@ rouge_score
 jaxtyping
 openai
 paramiko
+longppl

@@ -14,6 +14,10 @@ class AvailableModels(str, Enum):
     codet5_plus_inst = "Salesforce/codet5p-16b-instruct"
     wizardcoder = "WizardLMTeam/WizardCoder-15B-V1.0"
     codegen = "Salesforce/codegen-6B-multi"
+    mellum = "JetBrains/Mellum-4b-base"
+    codesage = "codesage/codesage-large-v2"
+    parscale = "ParScale/ParScale-Qwen-3B-P8-Python"
+    yulan = "yulan-team/YuLan-Mini"
 
 
 class CLSecurityDataset(str, Enum):
