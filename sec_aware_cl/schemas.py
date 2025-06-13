@@ -29,4 +29,8 @@ MODEL_INFO = {
     AvailableModels.codegen: datetime(2022, 3, 22),
     AvailableModels.vicuna7: datetime(2023, 5, 9),
     AvailableModels.vicuna13: datetime(2023, 5, 9),
+    AvailableModels.mellum: datetime(3000, 1, 1),  # Mellum does not have a clear release date
+    AvailableModels.codesage: datetime(3000, 1, 1),  # CodeSage does not have a clear release date
+    AvailableModels.parscale: datetime(3000, 1, 1),  # ParScale does not have a clear release date
+    AvailableModels.yulan: datetime(3000, 1, 1),  # YuLan does not have a clear release date
 }

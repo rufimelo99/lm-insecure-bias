@@ -1,7 +1,7 @@
 import urllib
 from dataclasses import dataclass
 from datetime import datetime
-
+from sec_aware_cl.schemas import MODEL_INFO
 import duckdb
 
 text = (
@@ -163,13 +163,6 @@ def find_last_suitable_version(date):
         raise ValueError("No suitable version found. Model likely is too old.")
     return last_version
 
-
-MODEL_INFO = {
-    "WizardLMTeam/WizardCoder-15B-V1.0": datetime(2024, 1, 4),
-    "Salesforce/codegen-6B-multi": datetime(2022, 3, 22),
-    "lmsys/vicuna-7b-v1.5": datetime(2023, 5, 9),
-    "lmsys/vicuna-13b-v1.5": datetime(2023, 5, 9),
-}
 
 
 def check_stack_membership(snippet, model, is_patch, db_path="repos.duckdb"):
