@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 *.csv
 *.jsonl
-/drl_patches/sparse_autoencoders/gbug-java
+/sae_java_bug/sparse_autoencoders/gbug-java
 /sec_aware_cl/our_cool_model
