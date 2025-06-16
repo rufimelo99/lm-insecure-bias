@@ -18,6 +18,7 @@ class AvailableModels(str, Enum):
     codesage = "codesage/codesage-large-v2"
     parscale = "ParScale/ParScale-Qwen-3B-P8-Python"
     yulan = "yulan-team/YuLan-Mini"
+    starcoder3b = "bigcode/starcoder2-3b"
 
 
 class CLSecurityDataset(str, Enum):
@@ -33,4 +34,5 @@ MODEL_INFO = {
     AvailableModels.codesage: datetime(3000, 1, 1),  # CodeSage does not have a clear release date
     AvailableModels.parscale: datetime(3000, 1, 1),  # ParScale does not have a clear release date
     AvailableModels.yulan: datetime(3000, 1, 1),  # YuLan does not have a clear release date
+    AvailableModels.starcoder3b: datetime(3000, 1, 1),  # YuLan does not have a clear release date
 }
