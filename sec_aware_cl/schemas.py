@@ -19,6 +19,7 @@ class AvailableModels(str, Enum):
     parscale = "ParScale/ParScale-Qwen-3B-P8-Python"
     yulan = "yulan-team/YuLan-Mini"
     starcoder3b = "bigcode/starcoder2-3b"
+    starcoder7b = "bigcode/starcoder2-7b"
 
 
 class CLSecurityDataset(str, Enum):
@@ -35,4 +36,5 @@ MODEL_INFO = {
     AvailableModels.parscale: datetime(3000, 1, 1),  # ParScale does not have a clear release date
     AvailableModels.yulan: datetime(3000, 1, 1),  # YuLan does not have a clear release date
     AvailableModels.starcoder3b: datetime(3000, 1, 1),  # YuLan does not have a clear release date
+    AvailableModels.starcoder7b: datetime(3000, 1, 1),  # YuLan does not have a clear release date
 }
