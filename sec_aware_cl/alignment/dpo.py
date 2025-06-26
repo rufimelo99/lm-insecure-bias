@@ -81,7 +81,7 @@ def compute_framework(model, tokenizer, prompt, continuation):
 
     outputs = forward_pass(input_text, model, tokenizer, hidden_states=True)
 
-    ppl = compute_perplexity(outputs)[0]
+    ppl = compute_perplexity(outputs)[0].item()  # Convert to scalar float
     logprob = compute_logprob(outputs, inputs)
     uncertainty = compute_uncertainty(outputs)
 
