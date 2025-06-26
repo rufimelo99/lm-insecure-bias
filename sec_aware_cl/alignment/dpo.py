@@ -213,6 +213,13 @@ def main(model, directory, output_dir):
                     preferenced_aligned = chosen_logprob > rejected_logprob
                     ppl_diff = chosen_ppl - rejected_ppl
                     uncertainty_diff = chosen_uncertainty - rejected_uncertainty
+                    logger.info(
+                        "DPO Loss, Aligned, PPL Diff, Uncertainty Diff",
+                        loss=loss.item(),
+                        aligned=preferenced_aligned,
+                        ppl_diff=ppl_diff,
+                        uncertainty_diff=uncertainty_diff,
+                    )
 
                     in_the_stack = None
                     if model_name not in data["model_names"]:
