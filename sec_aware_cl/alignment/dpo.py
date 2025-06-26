@@ -205,7 +205,6 @@ def main(model, directory, output_dir):
                 "alignment_stats": alignemnt_dict[cwe],
             }
             write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
-            break
         write_jsonl(
             alignemnt_dict,
             os.path.join(output_dir, f"alignment_stats.jsonl"),
