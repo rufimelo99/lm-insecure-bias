@@ -204,11 +204,11 @@ def main(model, directory, output_dir):
                 "alignment_stats": alignemnt_dict[cwe],
             }
             write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
-        write_jsonl(
-            alignemnt_dict,
-            os.path.join(output_dir, f"alignment_stats.jsonl"),
-            append=True,
-        )
+            write_jsonl(
+                {"cwe": cwe, "stats": alignemnt_dict[cwe]},
+                os.path.join(output_dir, f"alignment_stats.jsonl"),
+                append=True,
+            )
 
 
 if __name__ == "__main__":
