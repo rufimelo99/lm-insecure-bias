@@ -183,7 +183,6 @@ def main(model, directory, output_dir):
 
                     if chosen_logprob > rejected_logprob:
                         cwe_aligned_count += 1
-                        total_aligned_count += 1
 
                     data["dpo_loss"] = loss.item()
                     data["aligned"] = chosen_logprob > rejected_logprob
