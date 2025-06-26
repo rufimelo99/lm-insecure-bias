@@ -162,3 +162,4 @@ cython_debug/
 *.jsonl
 /sae_java_bug/sparse_autoencoders/gbug-java
 /sec_aware_cl/our_cool_model
+/wandb
