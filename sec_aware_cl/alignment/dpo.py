@@ -36,19 +36,56 @@ def forward_pass(sentence: str, model, tokenizer, hidden_states=False):
     return outputs
 
 
+def compute_perplexity(outputs):
+    return (
+        torch.exp(outputs.loss).cpu().numpy(),
+        # `outputs.hidden_states` is a list of the outputs per layer.
+        # Each output is [batch, seq_length, hidden].
+        outputs.hidden_states[-1][:, -1, :].cpu().numpy(),
+    )
+
+
 @torch.no_grad()
-def compute_logprob(model, tokenizer, prompt, continuation):
-    input_text = prompt + continuation
-    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
-
-    outputs = forward_pass(input_text, model, tokenizer, hidden_states=False)
-
+def compute_logprob(outputs, inputs):
     logits = outputs.logits[:, :-1, :]
     target_ids = inputs["input_ids"][:, 1:]
     log_probs = F.log_softmax(logits, dim=-1)
     token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
     total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
     return total_logprob.cpu().item()  # return scalar float
+
+
+def compute_uncertainty(outputs):
+    """
+    Computes the uncertainty of the model's predictions based on the hidden states.
+    Token Entropy
+    """
+    logits = outputs.logits[:, :-1, :]  # Exclude the last token
+    log_probs = F.log_softmax(logits, dim=-1)  # Compute log probabilities
+
+    probs = torch.exp(log_probs)  # Probabilities
+
+    entropy = -torch.sum(probs * log_probs, dim=-1)  # Shape: (batch, seq_len)
+    avg_entropy = entropy.mean(dim=1)  # Average over sequence length
+    return avg_entropy.cpu().item()  # return scalar float
+
+
+@torch.no_grad()
+def compute_framework(model, tokenizer, prompt, continuation):
+    """
+    Responsible for model forwarding, calculating DPO preference, PPL and Uncertainty
+    for a given prompt and continuation.
+    """
+    input_text = prompt + continuation
+    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+
+    outputs = forward_pass(input_text, model, tokenizer, hidden_states=True)
+
+    ppl = compute_perplexity(outputs)[0]
+    logprob = compute_logprob(outputs, inputs)
+    uncertainty = compute_uncertainty(outputs)
+
+    return ppl, logprob, uncertainty
 
 
 # DPO loss function (uses scalar torch floats)
@@ -142,11 +179,25 @@ def main(model, directory, output_dir):
                     user_input = ""
                     chosen = data["chosen"]
                     rejected = data["rejected"]
-                    chosen_logprob = compute_logprob(
+
+                    chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
                         model, tokenizer, user_input, chosen
                     )
-                    rejected_logprob = compute_logprob(
-                        model, tokenizer, user_input, rejected
+                    logger.info(
+                        "Chosen PPL, Logprob, Uncertainty",
+                        ppl=chosen_ppl,
+                        logprob=chosen_logprob,
+                        uncertainty=chosen_uncertainty,
+                    )
+
+                    rejected_ppl, rejected_logprob, rejected_uncertainty = (
+                        compute_framework(model, tokenizer, user_input, rejected)
+                    )
+                    logger.info(
+                        "Rejected PPL, Logprob, Uncertainty",
+                        ppl=rejected_ppl,
+                        logprob=rejected_logprob,
+                        uncertainty=rejected_uncertainty,
                     )
 
                     # Convert to torch float32 scalar tensors
@@ -156,14 +207,12 @@ def main(model, directory, output_dir):
                     rejected_logprob_tensor = torch.tensor(
                         rejected_logprob, dtype=torch.float32
                     )
-
                     loss = dpo_loss(chosen_logprob_tensor, rejected_logprob_tensor)
-
-                    logger.debug(
-                        "DPO Loss calculated",
-                        loss=loss,
-                    )
                     dpo_losses.append(loss.item())
+
+                    preferenced_aligned = chosen_logprob > rejected_logprob
+                    ppl_diff = chosen_ppl - rejected_ppl
+                    uncertainty_diff = chosen_uncertainty - rejected_uncertainty
 
                     in_the_stack = None
                     if model_name not in data["model_names"]:
@@ -181,13 +230,16 @@ def main(model, directory, output_dir):
 
                     data["in_the_stack"] = in_the_stack
 
-                    if chosen_logprob > rejected_logprob:
+                    if preferenced_aligned:
                         cwe_aligned_count += 1
 
                     data["dpo_loss"] = loss.item()
-                    data["aligned"] = chosen_logprob > rejected_logprob
+                    data["aligned"] = preferenced_aligned
+                    data["ppl_diff"] = ppl_diff
+                    data["uncertainty_diff"] = uncertainty_diff
 
                     snippets.append(data)
+
             alignemnt_dict[cwe].append(
                 {
                     "aligned_count": cwe_aligned_count,
