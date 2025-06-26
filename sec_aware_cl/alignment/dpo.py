@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 
 import torch
@@ -117,6 +118,8 @@ def main(model, directory, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    alignemnt_dict = defaultdict(list)
+
     # Open directory. It has either safe or vulnerable folders
     for folder in os.listdir(directory):
         if folder not in ["data"]:
@@ -127,12 +130,11 @@ def main(model, directory, output_dir):
             cwe = file.split(".")[0]
             snippets = []
             dpo_losses = []
-            total_aligned_count = 0
 
+            cwe_aligned_count = 0
             with open(os.path.join(directory, folder, file), "r") as f:
                 logger.info("Processing file", file=file)
 
-                cwe_aligned_count = 0
                 for line in f:
                     # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
                     data = json.loads(line)
@@ -161,6 +163,7 @@ def main(model, directory, output_dir):
                         "DPO Loss calculated",
                         loss=loss,
                     )
+                    dpo_losses.append(loss.item())
 
                     in_the_stack = None
                     if model_name not in data["model_names"]:
@@ -177,16 +180,20 @@ def main(model, directory, output_dir):
                     del data["in_the_stack"]
 
                     data["in_the_stack"] = in_the_stack
-                    dpo_losses.append(loss.item())
+
                     if chosen_logprob > rejected_logprob:
                         cwe_aligned_count += 1
                         total_aligned_count += 1
 
-                    snippets.append(data)
+                    data["dpo_loss"] = loss.item()
+                    data["aligned"] = chosen_logprob > rejected_logprob
 
-            alignment_score = cwe_aligned_count / len(snippets)
-            logger.info(
-                f"Alignment Score for {cwe}: {alignment_score * 100:.2f}% ({cwe_aligned_count}/{len(snippets)})"
+                    snippets.append(data)
+            alignemnt_dict[cwe].append(
+                {
+                    "aligned_count": cwe_aligned_count,
+                    "total_count": len(snippets),
+                }
             )
 
             # Save the results. # TODO: Create a basemodel for this
@@ -195,13 +202,15 @@ def main(model, directory, output_dir):
                 "model": model_name,
                 "dpo_losses": dpo_losses,
                 "snippets": snippets,
+                "alignment_stats": alignemnt_dict[cwe],
             }
             write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
-
-    total_alignment_score = total_aligned_count / len(snippets)
-    logger.info(
-        f"Total Alignment Score: {total_alignment_score * 100:.2f}% ({total_aligned_count}/{len(snippets)})"
-    )
+            break
+        write_jsonl(
+            alignemnt_dict,
+            os.path.join(output_dir, f"alignment_stats.jsonl"),
+            append=True,
+        )
 
 
 if __name__ == "__main__":
