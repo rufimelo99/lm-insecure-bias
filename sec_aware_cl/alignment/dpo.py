@@ -138,7 +138,6 @@ def main(model, directory, output_dir):
                     data = json.loads(line)
 
                     user_input = ""
-                    breakpoint()
                     chosen = data["chosen"]
                     rejected = data["rejected"]
                     chosen_logprob = compute_logprob(
