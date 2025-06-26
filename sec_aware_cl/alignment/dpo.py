@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 
 import torch
+import torch.nn.functional as F
 from longppl.longppl import compute_longppl
 from tqdm import tqdm
 from transformers import (
@@ -20,18 +21,33 @@ from sec_aware_cl.schemas import AvailableModels
 set_seed(1234)
 
 
-# Function to compute log probability of a continuation
-def compute_logprob(prompt, continuation):
+def forward_pass(sentence: str, model, tokenizer, hidden_states=False):
+    inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
+
+    if isinstance(model, torch.nn.DataParallel):
+        model = model.module
+    device = model.device  # Access the model's device directly
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    with torch.no_grad():
+        outputs = model(
+            **inputs, labels=inputs["input_ids"], output_hidden_states=hidden_states
+        )
+    return outputs
+
+
+@torch.no_grad()
+def compute_logprob(model, tokenizer, prompt, continuation):
     input_text = prompt + continuation
     inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
-    with torch.no_grad():
-        outputs = model(**inputs)
-        logits = outputs.logits[:, :-1, :]
-        target_ids = inputs["input_ids"][:, 1:]
-        log_probs = F.log_softmax(logits, dim=-1)
-        token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
-        total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
-        return total_logprob.cpu().item()  # return scalar float
+
+    outputs = forward_pass(input_text, model, tokenizer, hidden_states=False)
+
+    logits = outputs.logits[:, :-1, :]
+    target_ids = inputs["input_ids"][:, 1:]
+    log_probs = F.log_softmax(logits, dim=-1)
+    token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
+    total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
+    return total_logprob.cpu().item()  # return scalar float
 
 
 # DPO loss function (uses scalar torch floats)
@@ -40,18 +56,6 @@ def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
     return torch.nn.functional.softplus(
         -delta_logprob
     )  # Equivalent to -log(sigmoid(...))
-
-
-def forward_pass(sentence: str, model, tokenizer):
-    inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
-
-    if isinstance(model, torch.nn.DataParallel):
-        model = model.module
-    device = model.device  # Access the model's device directly
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, labels=inputs["input_ids"], output_hidden_states=True)
-    return outputs
 
 
 def write_jsonl(data: json, file_path, append=False):
@@ -64,7 +68,7 @@ def write_jsonl(data: json, file_path, append=False):
         f.write(json.dumps(data) + "\n")
 
 
-def main(model, directory, output_dir, longppl):
+def main(model, directory, output_dir):
     model_name = model
     device_map = "auto"
 
@@ -137,8 +141,12 @@ def main(model, directory, output_dir, longppl):
                     breakpoint()
                     chosen = data["chosen"]
                     rejected = data["rejected"]
-                    chosen_logprob = compute_logprob(user_input, chosen)
-                    rejected_logprob = compute_logprob(user_input, rejected)
+                    chosen_logprob = compute_logprob(
+                        model, tokenizer, user_input, chosen
+                    )
+                    rejected_logprob = compute_logprob(
+                        model, tokenizer, user_input, rejected
+                    )
 
                     # Convert to torch float32 scalar tensors
                     chosen_logprob_tensor = torch.tensor(
