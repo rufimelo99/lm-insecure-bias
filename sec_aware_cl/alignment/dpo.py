@@ -228,4 +228,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args.model, args.directory, args.output_dir, args.longppl)
+    main(args.model, args.directory, args.output_dir)
