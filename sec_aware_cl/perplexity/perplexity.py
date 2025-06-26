@@ -22,15 +22,13 @@ set_seed(1234)
 
 def forward_pass(sentence: str, model, tokenizer):
     inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
-    
+
     if isinstance(model, torch.nn.DataParallel):
         model = model.module
     device = model.device  # Access the model's device directly
     inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
-        outputs = model(
-            **inputs, labels=inputs["input_ids"], output_hidden_states=True
-        )
+        outputs = model(**inputs, labels=inputs["input_ids"], output_hidden_states=True)
     return outputs
 
 
@@ -90,6 +88,7 @@ def main(model, directory, output_dir, longppl):
     )
     if model_name == AvailableModels.codesage.value:
         from transformers import CodeSage
+
         model = CodeSage.from_pretrained(model_name, trust_remote_code=True)
     else:
         model = AutoModelForCausalLM.from_pretrained(

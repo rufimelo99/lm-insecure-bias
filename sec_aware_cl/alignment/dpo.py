@@ -1,8 +1,8 @@
-from datasets import Dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import torch.nn.functional as F
+from datasets import Dataset
 from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Sample dataset
 data = [
@@ -22,6 +22,7 @@ model.eval()
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
+
 # Function to compute log probability of a continuation
 def compute_logprob(prompt, continuation):
     input_text = prompt + continuation
@@ -35,10 +36,14 @@ def compute_logprob(prompt, continuation):
         total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
         return total_logprob.cpu().item()  # return scalar float
 
+
 # DPO loss function (uses scalar torch floats)
 def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
     delta_logprob = beta * (chosen_logprob - rejected_logprob)
-    return torch.nn.functional.softplus(-delta_logprob)  # Equivalent to -log(sigmoid(...))
+    return torch.nn.functional.softplus(
+        -delta_logprob
+    )  # Equivalent to -log(sigmoid(...))
+
 
 # Evaluate alignment
 aligned_count = 0
