@@ -213,9 +213,13 @@ def main(model, directory, output_dir):
                     loss = dpo_loss(chosen_logprob_tensor, rejected_logprob_tensor)
                     dpo_losses.append(loss.item())
 
-                    preferenced_aligned = chosen_logprob > rejected_logprob
-                    ppl_diff = chosen_ppl - rejected_ppl
-                    uncertainty_diff = chosen_uncertainty - rejected_uncertainty
+                    preferenced_aligned = (
+                        chosen_logprob > rejected_logprob
+                    )  # the higher the better. We want chose_long prob to be as close to 0 as possible, so that the model prefers the chosen over the rejected.
+                    ppl_diff = rejected_ppl - chosen_ppl  # the higher the better
+                    uncertainty_diff = (
+                        rejected_uncertainty - chosen_uncertainty
+                    )  # the higher the better
 
                     in_the_stack = None
                     if model_name not in data["model_names"]:
