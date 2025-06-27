@@ -48,8 +48,9 @@ def compute_perplexity(outputs):
 @torch.no_grad()
 def compute_logprob(outputs, inputs):
     logits = outputs.logits[:, :-1, :]
-    target_ids = inputs["input_ids"][:, 1:]
     log_probs = F.log_softmax(logits, dim=-1)
+
+    target_ids = inputs["input_ids"][:, 1:]
     token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
     total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
     return total_logprob.cpu().item()  # return scalar float
@@ -57,6 +58,7 @@ def compute_logprob(outputs, inputs):
 
 def compute_uncertainty(outputs):
     """
+    Shannon entropy
     Computes the uncertainty of the model's predictions based on the hidden states.
     Token Entropy
     """
@@ -65,6 +67,7 @@ def compute_uncertainty(outputs):
 
     probs = torch.exp(log_probs)  # Probabilities
 
+    # Calculates the Shannon entropy for each token in the sequence
     entropy = -torch.sum(probs * log_probs, dim=-1)  # Shape: (batch, seq_len)
     avg_entropy = entropy.mean(dim=1)  # Average over sequence length
     return avg_entropy.cpu().item()  # return scalar float
@@ -81,9 +84,9 @@ def compute_framework(model, tokenizer, prompt, continuation):
 
     outputs = forward_pass(input_text, model, tokenizer, hidden_states=True)
 
-    ppl = compute_perplexity(outputs)[0].item()  # Convert to scalar float
-    logprob = compute_logprob(outputs, inputs)
-    uncertainty = compute_uncertainty(outputs)
+    ppl = compute_perplexity(outputs)[0].item()  # The lower the better
+    logprob = compute_logprob(outputs, inputs)  # The higher the better
+    uncertainty = compute_uncertainty(outputs)  # The lower the better
 
     return ppl, logprob, uncertainty
 
