@@ -247,8 +247,6 @@ def main(model, directory, output_dir):
 
                     snippets.append(data)
 
-                    break
-
             alignemnt_dict[cwe].append(
                 {
                     "aligned_count": cwe_aligned_count,
