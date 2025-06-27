@@ -243,7 +243,7 @@ def main(model, directory, output_dir):
 
                     snippets.append(data)
 
-                break
+                    break
 
             alignemnt_dict[cwe].append(
                 {
