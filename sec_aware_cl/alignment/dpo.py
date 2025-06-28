@@ -1,9 +1,11 @@
 import argparse
 import json
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 
 import torch
+import torch.nn.functional as F
 from longppl.longppl import compute_longppl
 from tqdm import tqdm
 from transformers import (
@@ -20,7 +22,7 @@ from sec_aware_cl.schemas import AvailableModels
 set_seed(1234)
 
 
-def forward_pass(sentence: str, model, tokenizer):
+def forward_pass(sentence: str, model, tokenizer, hidden_states=False):
     inputs = tokenizer(sentence, return_tensors="pt", truncation=True)
 
     if isinstance(model, torch.nn.DataParallel):
@@ -28,23 +30,73 @@ def forward_pass(sentence: str, model, tokenizer):
     device = model.device  # Access the model's device directly
     inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
-        outputs = model(**inputs, labels=inputs["input_ids"], output_hidden_states=True)
+        outputs = model(
+            **inputs, labels=inputs["input_ids"], output_hidden_states=hidden_states
+        )
     return outputs
 
 
-def get_perplexity_hidden_state(sentence, model, tokenizer, longppl=False):
-    if longppl:
-        model = model.module
-        output = compute_longppl(
-            sentence, model, tokenizer=tokenizer, trunc_len=258, sliding_window=124
-        )
-    outputs = forward_pass(sentence, model, tokenizer)
+def compute_perplexity(outputs):
     return (
         torch.exp(outputs.loss).cpu().numpy(),
         # `outputs.hidden_states` is a list of the outputs per layer.
         # Each output is [batch, seq_length, hidden].
         outputs.hidden_states[-1][:, -1, :].cpu().numpy(),
     )
+
+
+@torch.no_grad()
+def compute_logprob(outputs, inputs):
+    logits = outputs.logits[:, :-1, :]
+    log_probs = F.log_softmax(logits, dim=-1)
+
+    target_ids = inputs["input_ids"][:, 1:]
+    token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
+    total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
+    return total_logprob.cpu().item()  # return scalar float
+
+
+def compute_uncertainty(outputs):
+    """
+    Shannon entropy
+    Computes the uncertainty of the model's predictions based on the hidden states.
+    Token Entropy
+    """
+    logits = outputs.logits[:, :-1, :]  # Exclude the last token
+    log_probs = F.log_softmax(logits, dim=-1)  # Compute log probabilities
+
+    probs = torch.exp(log_probs)  # Probabilities
+
+    # Calculates the Shannon entropy for each token in the sequence
+    entropy = -torch.sum(probs * log_probs, dim=-1)  # Shape: (batch, seq_len)
+    avg_entropy = entropy.mean(dim=1)  # Average over sequence length
+    return avg_entropy.cpu().item()  # return scalar float
+
+
+@torch.no_grad()
+def compute_framework(model, tokenizer, prompt, continuation):
+    """
+    Responsible for model forwarding, calculating DPO preference, PPL and Uncertainty
+    for a given prompt and continuation.
+    """
+    input_text = prompt + continuation
+    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+
+    outputs = forward_pass(input_text, model, tokenizer, hidden_states=True)
+
+    ppl = compute_perplexity(outputs)[0].item()  # The lower the better
+    logprob = compute_logprob(outputs, inputs)  # The higher the better
+    uncertainty = compute_uncertainty(outputs)  # The lower the better
+
+    return ppl, logprob, uncertainty
+
+
+# DPO loss function (uses scalar torch floats)
+def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
+    delta_logprob = beta * (chosen_logprob - rejected_logprob)
+    return torch.nn.functional.softplus(
+        -delta_logprob
+    )  # Equivalent to -log(sigmoid(...))
 
 
 def write_jsonl(data: json, file_path, append=False):
@@ -57,7 +109,7 @@ def write_jsonl(data: json, file_path, append=False):
         f.write(json.dumps(data) + "\n")
 
 
-def main(model, directory, output_dir, longppl):
+def main(model, directory, output_dir):
     model_name = model
     device_map = "auto"
 
@@ -106,6 +158,8 @@ def main(model, directory, output_dir, longppl):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    alignemnt_dict = defaultdict(list)
+
     # Open directory. It has either safe or vulnerable folders
     for folder in os.listdir(directory):
         if folder not in ["data"]:
@@ -115,28 +169,58 @@ def main(model, directory, output_dir, longppl):
 
             cwe = file.split(".")[0]
             snippets = []
-            vulnerable_perplexities = []
-            safe_perplexities = []
+            dpo_losses = []
 
+            cwe_aligned_count = 0
             with open(os.path.join(directory, folder, file), "r") as f:
                 logger.info("Processing file", file=file)
+
                 for line in f:
                     # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
                     data = json.loads(line)
 
-                    perplexity, hidden_state = get_perplexity_hidden_state(
-                        data["func"], model, tokenizer, longppl
+                    user_input = ""
+                    chosen = data["chosen"]
+                    rejected = data["rejected"]
+
+                    chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
+                        model, tokenizer, user_input, chosen
                     )
-                    perplexity = perplexity.item()
-                    logger.debug(
-                        "Perplexity and hidden state calculated",
-                        perplexity=perplexity,
+                    logger.info(
+                        "Chosen PPL, Logprob, Uncertainty",
+                        ppl=chosen_ppl,
+                        logprob=chosen_logprob,
+                        uncertainty=chosen_uncertainty,
                     )
 
-                    is_vulnerable = data["target"] == 1
+                    rejected_ppl, rejected_logprob, rejected_uncertainty = (
+                        compute_framework(model, tokenizer, user_input, rejected)
+                    )
+                    logger.info(
+                        "Rejected PPL, Logprob, Uncertainty",
+                        ppl=rejected_ppl,
+                        logprob=rejected_logprob,
+                        uncertainty=rejected_uncertainty,
+                    )
 
-                    # data["model_names"] = ["WizardLMTeam/WizardCoder-15B-V1.0"]
-                    # data["in_the_stack"]= [True]
+                    # Convert to torch float32 scalar tensors
+                    chosen_logprob_tensor = torch.tensor(
+                        chosen_logprob, dtype=torch.float32
+                    )
+                    rejected_logprob_tensor = torch.tensor(
+                        rejected_logprob, dtype=torch.float32
+                    )
+                    loss = dpo_loss(chosen_logprob_tensor, rejected_logprob_tensor)
+                    dpo_losses.append(loss.item())
+
+                    preferenced_aligned = (
+                        chosen_logprob > rejected_logprob
+                    )  # the higher the better. We want chose_long prob to be as close to 0 as possible, so that the model prefers the chosen over the rejected.
+                    ppl_diff = rejected_ppl - chosen_ppl  # the higher the better
+                    uncertainty_diff = (
+                        rejected_uncertainty - chosen_uncertainty
+                    )  # the higher the better
+
                     in_the_stack = None
                     if model_name not in data["model_names"]:
                         logger.warning(
@@ -153,22 +237,37 @@ def main(model, directory, output_dir, longppl):
 
                     data["in_the_stack"] = in_the_stack
 
-                    if is_vulnerable:
-                        vulnerable_perplexities.append(perplexity)
-                    else:
-                        safe_perplexities.append(perplexity)
+                    if preferenced_aligned:
+                        cwe_aligned_count += 1
+
+                    data["dpo_loss"] = loss.item()
+                    data["aligned"] = preferenced_aligned
+                    data["ppl_diff"] = ppl_diff
+                    data["uncertainty_diff"] = uncertainty_diff
 
                     snippets.append(data)
+
+            alignemnt_dict[cwe].append(
+                {
+                    "aligned_count": cwe_aligned_count,
+                    "total_count": len(snippets),
+                }
+            )
 
             # Save the results. # TODO: Create a basemodel for this
             results = {
                 "cwe": cwe,
                 "model": model_name,
-                "vulnerable": vulnerable_perplexities,
-                "safe": safe_perplexities,
+                "dpo_losses": dpo_losses,
                 "snippets": snippets,
+                "alignment_stats": alignemnt_dict[cwe],
             }
             write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
+            write_jsonl(
+                {"cwe": cwe, "stats": alignemnt_dict[cwe]},
+                os.path.join(output_dir, f"alignment_stats.jsonl"),
+                append=True,
+            )
 
 
 if __name__ == "__main__":
@@ -201,12 +300,5 @@ if __name__ == "__main__":
         required=True,
     )
 
-    parser.add_argument(
-        "--longppl",
-        action="store_true",
-        default=False,
-        help="Use LongPPL metric",
-    )
-
     args = parser.parse_args()
-    main(args.model, args.directory, args.output_dir, args.longppl)
+    main(args.model, args.directory, args.output_dir)

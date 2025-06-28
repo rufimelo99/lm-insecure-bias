@@ -1,8 +1,10 @@
 import urllib
 from dataclasses import dataclass
 from datetime import datetime
-from sec_aware_cl.schemas import MODEL_INFO
+
 import duckdb
+
+from sec_aware_cl.schemas import MODEL_INFO
 
 text = (
     """\
@@ -162,7 +164,6 @@ def find_last_suitable_version(date):
     if last_version is None:
         raise ValueError("No suitable version found. Model likely is too old.")
     return last_version
-
 
 
 def check_stack_membership(snippet, model, is_patch, db_path="repos.duckdb"):

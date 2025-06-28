@@ -1,9 +1,9 @@
 # Iterate over the dataset
 import argparse
 
-from datasets import load_dataset
+from datasets import IterableDataset, load_dataset
 from tqdm import tqdm
-from datasets import IterableDataset
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Filter the dataset")
@@ -44,13 +44,10 @@ if __name__ == "__main__":
         with open(output_projects_txt, "a") as f:
             f.write(repo_name + "\n")
 
-
     # Filter based on "repo_name"
     dataset: IterableDataset = dataset.filter(
         lambda x: x["repo_name"].lower() in projects,
     )
-
-    
 
     # convert to dataset and push to hub
     dataset = dataset.to_dataset()

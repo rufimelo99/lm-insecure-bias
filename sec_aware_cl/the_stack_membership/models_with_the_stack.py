@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 # Define the Hugging Face API endpoint with the specific dataset filter
 API_URL = "https://huggingface.co/api/models?filter=dataset:bigcode/the-stack-v2"
@@ -10,7 +11,7 @@ response = requests.get(API_URL)
 # Check if the request was successful
 if response.status_code == 200:
     models = response.json()
-    
+
     # Extract relevant information from each model
     model_data = []
     for model in models:
@@ -45,11 +46,13 @@ if response.status_code == 200:
             "createdAt": model.get("createdAt"),
         }
         model_data.append(model_info)
-    
+
     # Save the extracted data to a JSON file
     with open("models_using_the_stack_v2.json", "w") as json_file:
         json.dump(model_data, json_file, indent=4)
-    
+
     print("Model data has been saved to 'models_using_the_stack_v2.json'")
 else:
-    print(f"Failed to fetch data from Hugging Face API. Status code: {response.status_code}")
+    print(
+        f"Failed to fetch data from Hugging Face API. Status code: {response.status_code}"
+    )
