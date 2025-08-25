@@ -167,7 +167,9 @@ def main(model, directory, output_dir):
         if folder not in ["data"]:
             continue
 
-        for file in tqdm(os.listdir(os.path.join(directory, folder)), total=144):
+        n_files = len(os.listdir(os.path.join(directory, folder)))
+
+        for file in tqdm(os.listdir(os.path.join(directory, folder)), total=n_files):
 
             cwe = file.split(".")[0]
             snippets = []
@@ -198,12 +200,12 @@ def main(model, directory, output_dir):
                     rejected_ppl, rejected_logprob, rejected_uncertainty = (
                         compute_framework(model, tokenizer, user_input, rejected)
                     )
-                    logger.info(
-                        "Rejected PPL, Logprob, Uncertainty",
-                        ppl=rejected_ppl,
-                        logprob=rejected_logprob,
-                        uncertainty=rejected_uncertainty,
-                    )
+                    # logger.info(
+                    #     "Rejected PPL, Logprob, Uncertainty",
+                    #     ppl=rejected_ppl,
+                    #     logprob=rejected_logprob,
+                    #     uncertainty=rejected_uncertainty,
+                    # )
 
                     # Convert to torch float32 scalar tensors
                     chosen_logprob_tensor = torch.tensor(
