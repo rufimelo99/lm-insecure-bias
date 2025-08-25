@@ -15,4 +15,7 @@ python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_di
 python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir starcoder13b_results --model bigcode/starcoder2-13b
 python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir mellum_results --model JetBrains/Mellum-4b-base
 python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir deepseek_results --model deepseek-ai/deepseek-coder-6.7b-base
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir codellama7b_results --model meta-llama/CodeLlama-7b-hf
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir codellama13b_results --model meta-llama/CodeLlama-13b-hf
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir gptoss20b_results --model openai/gpt-oss-20b
 ```
