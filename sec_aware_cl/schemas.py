@@ -22,6 +22,7 @@ class AvailableModels(str, Enum):
     yulan = "yulan-team/YuLan-Mini"
     starcoder3b = "bigcode/starcoder2-3b"
     starcoder7b = "bigcode/starcoder2-7b"
+    gptoss20 = "openai/gpt-oss-20b"
 
 
 class CLSecurityDataset(str, Enum):

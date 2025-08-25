@@ -94,9 +94,7 @@ def compute_framework(model, tokenizer, prompt, continuation):
 # DPO loss function (uses scalar torch floats)
 def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
     delta_logprob = beta * (chosen_logprob - rejected_logprob)
-    return -torch.log(
-        torch.sigmoid(delta_logprob)
-    )
+    return -torch.log(torch.sigmoid(delta_logprob))
     # Equivalent to -log(sigmoid(...)) for DPO loss
     # return torch.nn.functional.softplus(
     #     -delta_logprob
@@ -169,7 +167,9 @@ def main(model, directory, output_dir):
         if folder not in ["data"]:
             continue
 
-        for file in tqdm(os.listdir(os.path.join(directory, folder)), total=144):
+        n_files = len(os.listdir(os.path.join(directory, folder)))
+
+        for file in tqdm(os.listdir(os.path.join(directory, folder)), total=n_files):
 
             cwe = file.split(".")[0]
             snippets = []
@@ -177,9 +177,10 @@ def main(model, directory, output_dir):
 
             cwe_aligned_count = 0
             with open(os.path.join(directory, folder, file), "r") as f:
-                logger.info("Processing file", file=file)
 
-                for line in f:
+                n_lines = sum(1 for _ in f)
+                f.seek(0)  # Reset file
+                for line in tqdm(f, total=n_lines, desc=f"Processing lines in {file}"):
                     # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
                     data = json.loads(line)
 
@@ -190,22 +191,22 @@ def main(model, directory, output_dir):
                     chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
                         model, tokenizer, user_input, chosen
                     )
-                    logger.info(
-                        "Chosen PPL, Logprob, Uncertainty",
-                        ppl=chosen_ppl,
-                        logprob=chosen_logprob,
-                        uncertainty=chosen_uncertainty,
-                    )
+                    # logger.info(
+                    #     "Chosen PPL, Logprob, Uncertainty",
+                    #     ppl=chosen_ppl,
+                    #     logprob=chosen_logprob,
+                    #     uncertainty=chosen_uncertainty,
+                    # )
 
                     rejected_ppl, rejected_logprob, rejected_uncertainty = (
                         compute_framework(model, tokenizer, user_input, rejected)
                     )
-                    logger.info(
-                        "Rejected PPL, Logprob, Uncertainty",
-                        ppl=rejected_ppl,
-                        logprob=rejected_logprob,
-                        uncertainty=rejected_uncertainty,
-                    )
+                    # logger.info(
+                    #     "Rejected PPL, Logprob, Uncertainty",
+                    #     ppl=rejected_ppl,
+                    #     logprob=rejected_logprob,
+                    #     uncertainty=rejected_uncertainty,
+                    # )
 
                     # Convert to torch float32 scalar tensors
                     chosen_logprob_tensor = torch.tensor(
@@ -224,22 +225,6 @@ def main(model, directory, output_dir):
                     uncertainty_diff = (
                         rejected_uncertainty - chosen_uncertainty
                     )  # the higher the better
-
-                    in_the_stack = None
-                    if model_name not in data["model_names"]:
-                        logger.warning(
-                            "Model was not preprocessed to know if it has seen this data prior or not",
-                            model=model_name,
-                        )
-                    else:
-                        model_name_idx = data["model_names"].index(model_name)
-                        in_the_stack = data["in_the_stack"][model_name_idx]
-
-                    # remove the model_names and in_the_stack keys from the data
-                    del data["model_names"]
-                    del data["in_the_stack"]
-
-                    data["in_the_stack"] = in_the_stack
 
                     if preferenced_aligned:
                         cwe_aligned_count += 1

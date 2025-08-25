@@ -159,7 +159,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 *.csv
-*.jsonl
 /sae_java_bug/sparse_autoencoders/gbug-java
 /sec_aware_cl/our_cool_model
 /wandb
+/artifacts/alignment_dataset

@@ -1,16 +1,21 @@
-How to run the code:
+# Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment
 
-cd PurpleLlama
+
+## Installation
+```
+conda create -n cl python=3.10 -y
+source activate cl
+cd SecurityAwareCL
 git submodule update --init --recursive
-
-export DATASETS=$(pwd)/CybersecurityBenchmarks/datasets/
-
-python -m CybersecurityBenchmarks.benchmark.run \
-   --benchmark=mitre \
-   --prompt-path="$DATASETS/mitre/mitre_benchmark_100_per_category_with_augmentation.json" \
-   --response-path="$DATASETS/mitre_responses.json" \
-   --judge-response-path="$DATASETS/mitre_judge_responses.json" \
-   --stat-path="$DATASETS/mitre_stat.json" \
-   --judge-llm="SELFHOSTED::gpt2::something" \
-   --expansion-llm="SELFHOSTED::openai-community/gpt2::something" \
-   --llm-under-test=SELFHOSTED::openai-community/gpt2::something
+pip install -e .
+export GITHUB_BEARER_TOKEN=your_very_cool_token
+python sec_aware_cl/secommits/process_json.py --json_path sec_aware_cl/secommits/secommits-raw.json
+python alignment/dataset_builder.py --directory alignment/datasets/ --seccommit_osv <PATH_TO_SEC_COMMIT_OSV>
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir starcoder7b_results --model bigcode/starcoder2-7b
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir starcoder3b_results --model bigcode/starcoder2-3b
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir mellum_results --model JetBrains/Mellum-4b-base
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir deepseek_results --model deepseek-ai/deepseek-coder-6.7b-base
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir codellama7b_results --model meta-llama/CodeLlama-7b-hf
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir codellama13b_results --model meta-llama/CodeLlama-13b-hf
+python sec_aware_cl/alignment/dpo.py --directory alignment/datasets/ --output_dir gptoss20b_results --model openai/gpt-oss-20b
+```

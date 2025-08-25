@@ -18,9 +18,9 @@ setup(
             # 'your_command=your_module.your_module:main',
         ],
     },
-    author="Rui Melo",
-    author_email="rufimelo99@gmail.com",
-    description="PhD work @ FEUP, PORTO",
+    author="",
+    author_email="",
+    description="",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     classifiers=[
