@@ -224,15 +224,6 @@ def main(model, directory, output_dir):
                     )  # the higher the better
 
                     in_the_stack = None
-                    if model_name not in data["model_names"]:
-                        logger.warning(
-                            "Model was not preprocessed to know if it has seen this data prior or not",
-                            model=model_name,
-                        )
-                    else:
-                        model_name_idx = data["model_names"].index(model_name)
-                        in_the_stack = data["in_the_stack"][model_name_idx]
-
                     # remove the model_names and in_the_stack keys from the data
                     del data["model_names"]
                     del data["in_the_stack"]
