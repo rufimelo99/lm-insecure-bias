@@ -1,16 +1,13 @@
-How to run the code:
+# Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment
 
-cd PurpleLlama
+
+## Installation
+```
+conda create -n cl python=3.10
+cd SecurityAwareCL
 git submodule update --init --recursive
-
-export DATASETS=$(pwd)/CybersecurityBenchmarks/datasets/
-
-python -m CybersecurityBenchmarks.benchmark.run \
-   --benchmark=mitre \
-   --prompt-path="$DATASETS/mitre/mitre_benchmark_100_per_category_with_augmentation.json" \
-   --response-path="$DATASETS/mitre_responses.json" \
-   --judge-response-path="$DATASETS/mitre_judge_responses.json" \
-   --stat-path="$DATASETS/mitre_stat.json" \
-   --judge-llm="SELFHOSTED::gpt2::something" \
-   --expansion-llm="SELFHOSTED::openai-community/gpt2::something" \
-   --llm-under-test=SELFHOSTED::openai-community/gpt2::something
+pip install -e .
+export GITHUB_BEARER_TOKEN=your_very_cool_token
+python sec_aware_cl/secommits/process_json.py --json_path sec_aware_cl/secommits/secommits-raw.json
+python alignment/dataset_builder.py --directory alignment/datasets/ --seccommit_osv <PATH_TO_SEC_COMMIT_OSV> --models <HF_MODEL_NAMES>
+```
