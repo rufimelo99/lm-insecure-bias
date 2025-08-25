@@ -194,6 +194,7 @@ def main(json_path, output_path, final_output_path):
         ],
     )
     df = df.drop_duplicates(subset=["vuln_id"])
+    df.groupby("cwe").filter(lambda x: len(x) >= 10)
 
     with open(final_output_path, "w") as f:
         for record in df.to_dict(orient="records"):
