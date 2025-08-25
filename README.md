@@ -10,5 +10,5 @@ git submodule update --init --recursive
 pip install -e .
 export GITHUB_BEARER_TOKEN=your_very_cool_token
 python sec_aware_cl/secommits/process_json.py --json_path sec_aware_cl/secommits/secommits-raw.json
-python alignment/dataset_builder.py --directory alignment/datasets/ --seccommit_osv <PATH_TO_SEC_COMMIT_OSV> --models <HF_MODEL_NAMES>
+python alignment/dataset_builder.py --directory alignment/datasets/ --seccommit_osv <PATH_TO_SEC_COMMIT_OSV>
 ```
