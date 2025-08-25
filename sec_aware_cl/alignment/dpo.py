@@ -223,13 +223,6 @@ def main(model, directory, output_dir):
                         rejected_uncertainty - chosen_uncertainty
                     )  # the higher the better
 
-                    in_the_stack = None
-                    # remove the model_names and in_the_stack keys from the data
-                    del data["model_names"]
-                    del data["in_the_stack"]
-
-                    data["in_the_stack"] = in_the_stack
-
                     if preferenced_aligned:
                         cwe_aligned_count += 1
 
