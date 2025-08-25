@@ -177,7 +177,10 @@ def main(model, directory, output_dir):
 
             cwe_aligned_count = 0
             with open(os.path.join(directory, folder, file), "r") as f:
-                for line in tqdm(f, total=1000000, desc=f"Processing lines in {file}"):
+
+                n_lines = sum(1 for _ in f)
+                f.seek(0)  # Reset file
+                for line in tqdm(f, total=n_lines, desc=f"Processing lines in {file}"):
                     # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
                     data = json.loads(line)
 
