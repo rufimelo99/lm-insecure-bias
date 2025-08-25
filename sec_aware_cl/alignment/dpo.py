@@ -190,12 +190,12 @@ def main(model, directory, output_dir):
                     chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
                         model, tokenizer, user_input, chosen
                     )
-                    logger.info(
-                        "Chosen PPL, Logprob, Uncertainty",
-                        ppl=chosen_ppl,
-                        logprob=chosen_logprob,
-                        uncertainty=chosen_uncertainty,
-                    )
+                    # logger.info(
+                    #     "Chosen PPL, Logprob, Uncertainty",
+                    #     ppl=chosen_ppl,
+                    #     logprob=chosen_logprob,
+                    #     uncertainty=chosen_uncertainty,
+                    # )
 
                     rejected_ppl, rejected_logprob, rejected_uncertainty = (
                         compute_framework(model, tokenizer, user_input, rejected)
