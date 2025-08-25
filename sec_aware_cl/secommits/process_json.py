@@ -10,38 +10,30 @@ from tqdm import tqdm
 from sec_aware_cl.logger import logger
 
 GITHUB_BEARER_TOKEN = os.getenv("GITHUB_BEARER_TOKEN")
-GITHUB_BEARER_TOKEN = "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"
 
 tqdm.pandas()
 
 
-def get_github_api_url(project_url, commit_hash):
-    """
-    Construct the GitHub API URL for a specific commit.
-
-    Args:
-        project_url (str): The GitHub repository URL.
-        commit_hash (str): The commit SHA.
-
-    Returns:
-        str or None: GitHub API URL or None if the input URL is invalid.
-    """
+def get_cwe(x):
     try:
-        parsed = urlparse(project_url)
-        if parsed.netloc not in ("github.com", "www.github.com"):
-            raise ValueError("Not a GitHub URL.")
-
-        # Remove leading/trailing slashes and extract user/repo
-        path_parts = parsed.path.strip("/").split("/")
-        if len(path_parts) < 2:
-            raise ValueError("Incomplete GitHub repo path.")
-
-        user_repo = "/".join(path_parts[:2])
-        return f"https://api.github.com/repos/{user_repo}/commits/{commit_hash}"
-
-    except Exception as e:
-        logger.error(f"Invalid project URL format: {e}")
+        cwe_set = eval(x)
+        if len(cwe_set) > 1:
+            print(f"Warning: multiple CWEs found for {x}")
+            return None
+        else:
+            return cwe_set.pop()
+    except:
         return None
+
+
+def get_file_extension(files: set):
+    files = list(files.keys())
+    file = files[0]
+    return file.split(".")[-1] if "." in file else None
+
+
+def filter_by_file_extension(df, supported_file_extensions):
+    return df[df["file_extension"].isin(supported_file_extensions)]
 
 
 def get_github_api_url(project, commit_hash):
@@ -138,12 +130,11 @@ def get_diff_versions_from_commit(commit, write_to_file=False):
         return prior_output, after_output
 
 
-def main(json_path, output_path):
+def main(json_path, output_path, final_output_path):
     df_csv = pd.read_json(
         json_path,
         orient="table",
     )
-
     df_csv = df_csv[df_csv["chain_len"] == 1]
     df_csv["files"] = df_csv["files"].progress_apply(lambda x: eval(x))
     df_csv = df_csv[df_csv["files"].apply(lambda x: len(x) == 1)]
@@ -174,6 +165,41 @@ def main(json_path, output_path):
 
     logger.info("Processing completed.")
 
+    df = pd.read_json(output_path, lines=True)
+    df = df.drop_duplicates(subset=["vuln_id"])
+    df = df[~df["cwe_id"].isna()]
+    df = df[~df["score"].isna()]
+
+    df["cwe"] = df["cwe_id"].apply(get_cwe)
+    df["file_extension"] = df["files"].apply(lambda x: get_file_extension(x))
+    df["file_extension"].value_counts()
+    df = filter_by_file_extension(
+        df,
+        [
+            "java",
+            "ts",
+            "php",
+            "js",
+            "cc",
+            "py",
+            "go",
+            "kt",
+            "rb",
+            "rs",
+            "cs",
+            "cpp",
+            "c",
+            "html",
+            "xml",
+        ],
+    )
+    df = df.drop_duplicates(subset=["vuln_id"])
+
+    with open(final_output_path, "w") as f:
+        for record in df.to_dict(orient="records"):
+            json.dump(record, f)
+            f.write("\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process JSON files.")
@@ -188,12 +214,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_path",
         type=str,
-        required=True,
         help="Path to the output JSONL file.",
+        default="secommits_filtered.jsonl",
+    )
+    parser.add_argument(
+        "--final_output_path",
+        type=str,
+        help="Path to the output JSONL file.",
+        default="secommits_filtered_final.jsonl",
     )
 
     args = parser.parse_args()
     json_path = args.json_path
     output_path = args.output_path
+    final_output_path = args.final_output_path
 
-    main(json_path, output_path)
+    main(json_path, output_path, final_output_path)
