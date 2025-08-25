@@ -3,7 +3,8 @@
 
 ## Installation
 ```
-conda create -n cl python=3.10
+conda create -n cl python=3.10 -y
+source activate cl
 cd SecurityAwareCL
 git submodule update --init --recursive
 pip install -e .
