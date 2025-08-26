@@ -163,3 +163,9 @@ cython_debug/
 /sec_aware_cl/our_cool_model
 /wandb
 /artifacts/alignment_dataset
+/plots/results_test 2
+/sec_aware_cl/dataset_test
+/sec_aware_cl/dpo_results
+/sec_aware_cl/dpo_test
+/sec_aware_cl/results_all
+/sec_aware_cl/results_all2

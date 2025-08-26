@@ -1,0 +1,25 @@
+directory: alignment/datasets/
+models:
+  - name: starcoder7b
+    output_dir: artifacts/security_alignment/starcoder7b_results
+    model: bigcode/starcoder2-7b
+
+  - name: starcoder3b
+    output_dir: artifacts/security_alignment/starcoder3b_results
+    model: bigcode/starcoder2-3b
+
+  - name: mellum
+    output_dir: artifacts/security_alignment/mellum_results
+    model: JetBrains/Mellum-4b-base
+
+  - name: deepseek
+    output_dir: artifacts/security_alignment/deepseek_results
+    model: deepseek-ai/deepseek-coder-6.7b-base
+
+  - name: codellama7b
+    output_dir: artifacts/security_alignment/codellama7b_results
+    model: meta-llama/CodeLlama-7b-hf
+
+  - name: codellama13b
+    output_dir: artifacts/security_alignment/codellama13b_results
+    model: meta-llama/CodeLlama-13b-hf
