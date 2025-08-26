@@ -150,28 +150,28 @@ def main(json_path, output_path, final_output_path):
     logger.info("Processing the data to extract vulnerable information.")
     df_csv = df_csv.reset_index(drop=True)
     # Iterate over the DataFrame rows and extract vulnerable information
-    # for index, row in tqdm(df_csv.iterrows(), total=df_csv.shape[0]):
-    #     commit_href = get_github_api_url(row["project"], row["commit_sha"])
-    #     res = get_commit_info(commit_href)
-    #     # specific_file = list(row["files"].keys())[0]
-    #     # file_info = get_file_info(res, specific_file)
-    #     if not res:
-    #         logger.error(f"Failed to retrieve commit info for {row['commit_sha']}")
-    #         continue
+    for index, row in tqdm(df_csv.iterrows(), total=df_csv.shape[0]):
+        commit_href = get_github_api_url(row["project"], row["commit_sha"])
+        res = get_commit_info(commit_href)
+        # specific_file = list(row["files"].keys())[0]
+        # file_info = get_file_info(res, specific_file)
+        if not res:
+            logger.error(f"Failed to retrieve commit info for {row['commit_sha']}")
+            continue
 
-    #     prior_version, after_version = get_diff_versions_from_commit(res)
-    #     df_csv.at[index, "prior_version"] = prior_version
-    #     df_csv.at[index, "after_version"] = after_version
+        prior_version, after_version = get_diff_versions_from_commit(res)
+        df_csv.at[index, "prior_version"] = prior_version
+        df_csv.at[index, "after_version"] = after_version
 
-    #     row_json = row.to_dict()
-    #     row_json["prior_version"] = prior_version
-    #     row_json["after_version"] = after_version
+        row_json = row.to_dict()
+        row_json["prior_version"] = prior_version
+        row_json["after_version"] = after_version
 
-    #     # Append to the jsonl file
-    #     with open(output_path, "a") as f:
-    #         f.write(json.dumps(row_json) + "\n")
+        # Append to the jsonl file
+        with open(output_path, "a") as f:
+            f.write(json.dumps(row_json) + "\n")
 
-    # logger.info("Processing completed.")
+    logger.info("Processing completed.")
 
     df = pd.read_json(output_path, lines=True)
     print(f"Initial shape: {df.shape}")
