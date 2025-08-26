@@ -31,6 +31,6 @@ python sec_aware_cl/alignment/join_results.py \
   artifacts/security_alignment/starcoder3b_results \
   artifacts/security_alignment/mellum_results \
   artifacts/security_alignment/deepseek_results \
-  --output_dir artifacts/security_alignment/all_models
+  --output_dir artifacts/security_alignment/all_models_results
 
 ```
