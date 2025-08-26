@@ -197,8 +197,7 @@ def run_job(model_name: str, directory: str, output_dir: str):
                 data["ppl_diff"] = ppl_diff
                 data["uncertainty_diff"] = uncertainty_diff
                 logger.info(
-                    f"""Processed {file}: {data} 
-                    chosen_logprob: {chosen_logprob}, rejected_logprob: {rejected_logprob}
+                    f"""chosen_logprob: {chosen_logprob}, rejected_logprob: {rejected_logprob}
                     bt_loss: {loss.item()}
                     aligned: {preferenced_aligned}
                     ppl_diff: {ppl_diff}
