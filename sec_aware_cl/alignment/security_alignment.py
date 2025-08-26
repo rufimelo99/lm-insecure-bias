@@ -3,10 +3,12 @@ import json
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 import torch
 import torch.nn.functional as F
-from longppl.longppl import compute_longppl
+import yaml
+from longppl.longppl import compute_longppl  # (kept as in your original)
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
@@ -27,7 +29,7 @@ def forward_pass(sentence: str, model, tokenizer, hidden_states=False):
 
     if isinstance(model, torch.nn.DataParallel):
         model = model.module
-    device = model.device  # Access the model's device directly
+    device = model.device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
         outputs = model(
@@ -39,8 +41,6 @@ def forward_pass(sentence: str, model, tokenizer, hidden_states=False):
 def compute_perplexity(outputs):
     return (
         torch.exp(outputs.loss).cpu().numpy(),
-        # `outputs.hidden_states` is a list of the outputs per layer.
-        # Each output is [batch, seq_length, hidden].
         outputs.hidden_states[-1][:, -1, :].cpu().numpy(),
     )
 
@@ -52,67 +52,48 @@ def compute_logprob(outputs, inputs):
 
     target_ids = inputs["input_ids"][:, 1:]
     token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1)
-    total_logprob = token_log_probs.sum(dim=1)  # shape: (batch_size,)
-    return total_logprob.cpu().item()  # return scalar float
+    total_logprob = token_log_probs.sum(dim=1)
+    return total_logprob.cpu().item()
 
 
 def compute_uncertainty(outputs):
     """
-    Shannon entropy
-    Computes the uncertainty of the model's predictions based on the hidden states.
-    Token Entropy
+    Shannon entropy over tokens; lower is better (more confident).
     """
-    logits = outputs.logits[:, :-1, :]  # Exclude the last token
-    log_probs = F.log_softmax(logits, dim=-1)  # Compute log probabilities
-
-    probs = torch.exp(log_probs)  # Probabilities
-
-    # Calculates the Shannon entropy for each token in the sequence
-    entropy = -torch.sum(probs * log_probs, dim=-1)  # Shape: (batch, seq_len)
-    avg_entropy = entropy.mean(dim=1)  # Average over sequence length
-    return avg_entropy.cpu().item()  # return scalar float
+    logits = outputs.logits[:, :-1, :]
+    log_probs = F.log_softmax(logits, dim=-1)
+    probs = torch.exp(log_probs)
+    entropy = -torch.sum(probs * log_probs, dim=-1)
+    avg_entropy = entropy.mean(dim=1)
+    return avg_entropy.cpu().item()
 
 
 @torch.no_grad()
 def compute_framework(model, tokenizer, prompt, continuation):
-    """
-    Responsible for model forwarding, calculating DPO preference, PPL and Uncertainty
-    for a given prompt and continuation.
-    """
     input_text = prompt + continuation
     inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
-
     outputs = forward_pass(input_text, model, tokenizer, hidden_states=True)
 
-    ppl = compute_perplexity(outputs)[0].item()  # The lower the better
-    logprob = compute_logprob(outputs, inputs)  # The higher the better
-    uncertainty = compute_uncertainty(outputs)  # The lower the better
+    ppl = compute_perplexity(outputs)[0].item()
+    logprob = compute_logprob(outputs, inputs)
+    uncertainty = compute_uncertainty(outputs)
 
     return ppl, logprob, uncertainty
 
 
-# DPO loss function (uses scalar torch floats)
 def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
     delta_logprob = beta * (chosen_logprob - rejected_logprob)
     return -torch.log(torch.sigmoid(delta_logprob))
-    # Equivalent to -log(sigmoid(...)) for DPO loss
-    # return torch.nn.functional.softplus(
-    #     -delta_logprob
-    # )  # Equivalent to -log(sigmoid(...))
 
 
 def write_jsonl(data: json, file_path, append=False):
-    mode = "a" if append else "w"
-
-    if not os.path.exists(file_path):
-        mode = "w"
-
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    mode = "a" if append and os.path.exists(file_path) else "w"
     with open(file_path, mode) as f:
         f.write(json.dumps(data) + "\n")
 
 
-def main(model, directory, output_dir):
-    model_name = model
+def run_job(model_name: str, directory: str, output_dir: str):
     device_map = "auto"
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -124,22 +105,19 @@ def main(model, directory, output_dir):
     tokenizer.pad_token = tokenizer.eos_token
 
     if torch.cuda.is_bf16_supported():
-        compute_dtype = torch.bfloat16
-        attn_implementation = "flash_attention_2"
+        compute_dtype = torch.bfloat16  # noqa: F841 (kept for clarity)
+        attn_implementation = "flash_attention_2"  # noqa: F841
     else:
-        compute_dtype = torch.float16
-        attn_implementation = "sdpa"
+        compute_dtype = torch.float16  # noqa: F841
+        attn_implementation = "sdpa"  # noqa: F841
 
     bnb_config = BitsAndBytesConfig(
-        # Load the model with 4-bit quantization
         load_in_4bit=True,
-        # Use double quantization
         bnb_4bit_use_double_quant=True,
-        # Use 4-bit Normal Float for storing the base model weights in GPU memory
         bnb_4bit_quant_type="nf4",
-        # De-quantize the weights to 16-bit (Brain) float before the forward/backward pass
         bnb_4bit_compute_dtype=torch.bfloat16,
     )
+
     if model_name == AvailableModels.codesage.value:
         from transformers import CodeSage
 
@@ -157,137 +135,127 @@ def main(model, directory, output_dir):
         logger.info("Using GPUs", count=torch.cuda.device_count())
         model = torch.nn.DataParallel(model)
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     alignemnt_dict = defaultdict(list)
 
-    # Open directory. It has either safe or vulnerable folders
-    for folder in os.listdir(directory):
-        if folder not in ["data"]:
+    # Expecting a folder "data" under `directory`
+    data_root = os.path.join(directory, "data")
+    if not os.path.isdir(data_root):
+        logger.warning(f"No 'data' subfolder found in {directory}. Skipping.")
+        return
+
+    file_list = sorted(os.listdir(data_root))
+    n_files = len(file_list)
+
+    for file in tqdm(file_list, total=n_files, desc=f"Files ({model_name})"):
+        cwe = file.split(".")[0]
+        snippets = []
+        dpo_losses = []
+
+        cwe_aligned_count = 0
+        in_path = os.path.join(data_root, file)
+        if not os.path.isfile(in_path):
             continue
 
-        n_files = len(os.listdir(os.path.join(directory, folder)))
+        with open(in_path, "r") as f:
+            n_lines = sum(1 for _ in f)
+            f.seek(0)
+            for line in tqdm(f, total=n_lines, desc=f"Processing {file}", leave=False):
+                data = json.loads(line)
 
-        for file in tqdm(os.listdir(os.path.join(directory, folder)), total=n_files):
+                user_input = ""
+                chosen = data["chosen"]
+                rejected = data["rejected"]
 
-            cwe = file.split(".")[0]
-            snippets = []
-            dpo_losses = []
+                chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
+                    model, tokenizer, user_input, chosen
+                )
+                rejected_ppl, rejected_logprob, rejected_uncertainty = (
+                    compute_framework(model, tokenizer, user_input, rejected)
+                )
 
-            cwe_aligned_count = 0
-            with open(os.path.join(directory, folder, file), "r") as f:
+                chosen_logprob_tensor = torch.tensor(
+                    chosen_logprob, dtype=torch.float32
+                )
+                rejected_logprob_tensor = torch.tensor(
+                    rejected_logprob, dtype=torch.float32
+                )
+                loss = dpo_loss(chosen_logprob_tensor, rejected_logprob_tensor)
+                dpo_losses.append(loss.item())
 
-                n_lines = sum(1 for _ in f)
-                f.seek(0)  # Reset file
-                for line in tqdm(f, total=n_lines, desc=f"Processing lines in {file}"):
-                    # dict_keys(['idx', 'project', 'commit_id', 'project_url', 'commit_url', 'commit_message', 'target', 'func', 'func_hash', 'file_name', 'file_hash', 'cwe', 'cve', 'cve_desc', 'nvd_url'])
-                    data = json.loads(line)
+                preferenced_aligned = chosen_logprob > rejected_logprob
+                ppl_diff = rejected_ppl - chosen_ppl
+                uncertainty_diff = rejected_uncertainty - chosen_uncertainty
 
-                    user_input = ""
-                    chosen = data["chosen"]
-                    rejected = data["rejected"]
+                if preferenced_aligned:
+                    cwe_aligned_count += 1
 
-                    chosen_ppl, chosen_logprob, chosen_uncertainty = compute_framework(
-                        model, tokenizer, user_input, chosen
-                    )
-                    # logger.info(
-                    #     "Chosen PPL, Logprob, Uncertainty",
-                    #     ppl=chosen_ppl,
-                    #     logprob=chosen_logprob,
-                    #     uncertainty=chosen_uncertainty,
-                    # )
+                data["dpo_loss"] = loss.item()
+                data["aligned"] = preferenced_aligned
+                data["ppl_diff"] = ppl_diff
+                data["uncertainty_diff"] = uncertainty_diff
 
-                    rejected_ppl, rejected_logprob, rejected_uncertainty = (
-                        compute_framework(model, tokenizer, user_input, rejected)
-                    )
-                    # logger.info(
-                    #     "Rejected PPL, Logprob, Uncertainty",
-                    #     ppl=rejected_ppl,
-                    #     logprob=rejected_logprob,
-                    #     uncertainty=rejected_uncertainty,
-                    # )
+                snippets.append(data)
 
-                    # Convert to torch float32 scalar tensors
-                    chosen_logprob_tensor = torch.tensor(
-                        chosen_logprob, dtype=torch.float32
-                    )
-                    rejected_logprob_tensor = torch.tensor(
-                        rejected_logprob, dtype=torch.float32
-                    )
-                    loss = dpo_loss(chosen_logprob_tensor, rejected_logprob_tensor)
-                    dpo_losses.append(loss.item())
+        alignemnt_dict[cwe].append(
+            {"aligned_count": cwe_aligned_count, "total_count": len(snippets)}
+        )
 
-                    preferenced_aligned = (
-                        chosen_logprob > rejected_logprob
-                    )  # the higher the better. We want chose_long prob to be as close to 0 as possible, so that the model prefers the chosen over the rejected.
-                    ppl_diff = rejected_ppl - chosen_ppl  # the higher the better
-                    uncertainty_diff = (
-                        rejected_uncertainty - chosen_uncertainty
-                    )  # the higher the better
+        results = {
+            "cwe": cwe,
+            "model": model_name,
+            "dpo_losses": dpo_losses,
+            "snippets": snippets,
+            "alignment_stats": alignemnt_dict[cwe],
+        }
+        write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
+        write_jsonl(
+            {"cwe": cwe, "stats": alignemnt_dict[cwe]},
+            os.path.join(output_dir, "alignment_stats.jsonl"),
+            append=True,
+        )
 
-                    if preferenced_aligned:
-                        cwe_aligned_count += 1
 
-                    data["dpo_loss"] = loss.item()
-                    data["aligned"] = preferenced_aligned
-                    data["ppl_diff"] = ppl_diff
-                    data["uncertainty_diff"] = uncertainty_diff
+def load_config(path: str) -> Dict[str, Any]:
+    with open(path, "r") as f:
+        cfg = yaml.safe_load(f) or {}
+    if "directory" not in cfg or "models" not in cfg:
+        raise ValueError("Config must contain top-level keys 'directory' and 'models'.")
+    if not isinstance(cfg["models"], list) or not cfg["models"]:
+        raise ValueError("'models' must be a non-empty list.")
+    return cfg
 
-                    snippets.append(data)
 
-            alignemnt_dict[cwe].append(
-                {
-                    "aligned_count": cwe_aligned_count,
-                    "total_count": len(snippets),
-                }
-            )
+def run_from_config(cfg: Dict[str, Any]):
+    global_directory = cfg["directory"]
+    models: List[Dict[str, Any]] = cfg["models"]
 
-            # Save the results. # TODO: Create a basemodel for this
-            results = {
-                "cwe": cwe,
-                "model": model_name,
-                "dpo_losses": dpo_losses,
-                "snippets": snippets,
-                "alignment_stats": alignemnt_dict[cwe],
-            }
-            write_jsonl(results, os.path.join(output_dir, f"{cwe}.jsonl"), append=True)
-            write_jsonl(
-                {"cwe": cwe, "stats": alignemnt_dict[cwe]},
-                os.path.join(output_dir, f"alignment_stats.jsonl"),
-                append=True,
-            )
+    for i, job in enumerate(models, start=1):
+        model_name = job.get("model")
+        output_dir = job.get("output_dir")
+        directory = job.get("directory", global_directory)
+        name = job.get("name", model_name)
+
+        if not model_name or not output_dir:
+            raise ValueError(f"Model entry #{i} missing 'model' or 'output_dir'.")
+
+        logger.info(f"Starting job {i}/{len(models)}: {name}")
+        run_job(model_name=model_name, directory=directory, output_dir=output_dir)
+        logger.info(f"Finished job {i}/{len(models)}: {name}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run Constrative Learning with QLoRa")
-
-    model_options = [
-        model.value for model in list(AvailableModels.__members__.values())
-    ]
-    parser.add_argument(
-        "--model",
-        type=str,
-        help="The model to analyse",
-        choices=model_options,
-        default=AvailableModels.GPT2.value,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--directory",
-        type=str,
-        help="The dataset to use",
-        default="dataset",
-        required=True,
+    parser = argparse.ArgumentParser(
+        description="Run Security Alignment from YAML config"
     )
     parser.add_argument(
-        "--output_dir",
+        "--config",
         type=str,
-        help="The dataset to use",
-        default="dataset",
         required=True,
+        help="Path to YAML config with 'directory' and 'models' list",
     )
-
     args = parser.parse_args()
-    main(args.model, args.directory, args.output_dir)
+
+    cfg = load_config(args.config)
+    run_from_config(cfg)
