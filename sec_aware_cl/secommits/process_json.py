@@ -26,6 +26,11 @@ def get_cwe(x):
         return None
 
 
+def get_cwes(x):
+    cwe_set = eval(x)
+    return list(cwe_set)
+
+
 def get_file_extension(files: set):
     files = list(files.keys())
     file = files[0]
@@ -135,44 +140,49 @@ def main(json_path, output_path, final_output_path):
         json_path,
         orient="table",
     )
+    print(f"Initial shape: {df_csv.shape}")
     df_csv = df_csv[df_csv["chain_len"] == 1]
+    print(f"Shape after filtering chain_len == 1: {df_csv.shape}")
     df_csv["files"] = df_csv["files"].progress_apply(lambda x: eval(x))
     df_csv = df_csv[df_csv["files"].apply(lambda x: len(x) == 1)]
+    print(f"Shape after filtering files with length == 1: {df_csv.shape}")
 
     logger.info("Processing the data to extract vulnerable information.")
     df_csv = df_csv.reset_index(drop=True)
     # Iterate over the DataFrame rows and extract vulnerable information
-    for index, row in tqdm(df_csv.iterrows(), total=df_csv.shape[0]):
-        commit_href = get_github_api_url(row["project"], row["commit_sha"])
-        res = get_commit_info(commit_href)
-        # specific_file = list(row["files"].keys())[0]
-        # file_info = get_file_info(res, specific_file)
-        if not res:
-            logger.error(f"Failed to retrieve commit info for {row['commit_sha']}")
-            continue
+    # for index, row in tqdm(df_csv.iterrows(), total=df_csv.shape[0]):
+    #     commit_href = get_github_api_url(row["project"], row["commit_sha"])
+    #     res = get_commit_info(commit_href)
+    #     # specific_file = list(row["files"].keys())[0]
+    #     # file_info = get_file_info(res, specific_file)
+    #     if not res:
+    #         logger.error(f"Failed to retrieve commit info for {row['commit_sha']}")
+    #         continue
 
-        prior_version, after_version = get_diff_versions_from_commit(res)
-        df_csv.at[index, "prior_version"] = prior_version
-        df_csv.at[index, "after_version"] = after_version
+    #     prior_version, after_version = get_diff_versions_from_commit(res)
+    #     df_csv.at[index, "prior_version"] = prior_version
+    #     df_csv.at[index, "after_version"] = after_version
 
-        row_json = row.to_dict()
-        row_json["prior_version"] = prior_version
-        row_json["after_version"] = after_version
+    #     row_json = row.to_dict()
+    #     row_json["prior_version"] = prior_version
+    #     row_json["after_version"] = after_version
 
-        # Append to the jsonl file
-        with open(output_path, "a") as f:
-            f.write(json.dumps(row_json) + "\n")
+    #     # Append to the jsonl file
+    #     with open(output_path, "a") as f:
+    #         f.write(json.dumps(row_json) + "\n")
 
-    logger.info("Processing completed.")
+    # logger.info("Processing completed.")
 
     df = pd.read_json(output_path, lines=True)
+    print(f"Initial shape: {df.shape}")
     df = df.drop_duplicates(subset=["vuln_id"])
+    print(f"Shape after dropping duplicates: {df.shape}")
     df = df[~df["cwe_id"].isna()]
+    print(f"Shape after dropping rows with NaN cwe_id: {df.shape}")
     df = df[~df["score"].isna()]
+    print(f"Shape after dropping rows with NaN score: {df.shape}")
 
-    df["cwe"] = df["cwe_id"].apply(get_cwe)
     df["file_extension"] = df["files"].apply(lambda x: get_file_extension(x))
-    df["file_extension"].value_counts()
     df = filter_by_file_extension(
         df,
         [
@@ -193,11 +203,25 @@ def main(json_path, output_path, final_output_path):
             "xml",
         ],
     )
-    df = df.drop_duplicates(subset=["vuln_id"])
-    df = df.groupby("cwe").filter(lambda x: len(x) >= 10)
+    print(f"Shape after filtering by file extension: {df.shape}")
+
+    new_df = pd.DataFrame(columns=list(df.columns) + ["cwe"])
+
+    for i in df.iterrows():
+        cwes = get_cwes(i[1]["cwe_id"])
+        row = i[1].to_dict()
+        for cwe in cwes:
+            if cwe in ["NVD-CWE-noinfo", "NVD-CWE-Other"]:
+                continue
+            row["cwe"] = cwe
+            new_df = pd.concat([new_df, pd.DataFrame([row])], ignore_index=True)
+
+    print(f"Shape after expanding CWEs: {new_df.shape}")
+    new_df = new_df.groupby("cwe").filter(lambda x: len(x) >= 10)
+    print(f"Shape after filtering by CWE count >= 10: {new_df.shape}")
 
     with open(final_output_path, "w") as f:
-        for record in df.to_dict(orient="records"):
+        for record in new_df.to_dict(orient="records"):
             json.dump(record, f)
             f.write("\n")
 
