@@ -82,8 +82,9 @@ def compute_framework(model, tokenizer, prompt, continuation):
 
 
 def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
-    delta_logprob = beta * (chosen_logprob - rejected_logprob)
-    return -torch.log(torch.sigmoid(delta_logprob))
+    delta = beta * (chosen_logprob - rejected_logprob)
+    return F.softplus(-delta)           # preferred: stable for large ±delta
+    # return -F.logsigmoid(delta)       # also stable and equivalent
 
 
 def write_jsonl(data: json, file_path, append=False):

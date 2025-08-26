@@ -14,12 +14,7 @@ python alignment/dataset_builder.py --directory alignment/datasets/ --seccommit_
 
 
 # Run security alignment
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/starcoder7b_results --model bigcode/starcoder2-7b
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/starcoder3b_results --model bigcode/starcoder2-3b
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/mellum_results --model JetBrains/Mellum-4b-base
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/deepseek_results --model deepseek-ai/deepseek-coder-6.7b-base
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/codellama7b_results --model meta-llama/CodeLlama-7b-hf
-python sec_aware_cl/alignment/security_alignment.py --directory alignment/datasets/ --output_dir artifacts/security_alignment/codellama13b_results --model meta-llama/CodeLlama-13b-hf
+python sec_aware_cl/alignment/security_alignment.py --config sec_aware_cl/alignment/security_alignment_config.yaml
 
 
 # Join results
