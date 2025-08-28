@@ -29,38 +29,42 @@ def treat_seccomit_osv_dataset(
         os.makedirs(os.path.join(directory, "data"))
 
     df = pd.read_json(os.path.join(file_path), lines=True)
-
+    print(f"Initial shape: {df.shape}")
+    counter = 0
     for index, row in df.iterrows():
-        cwe = row["cwe_id"]
+        cwe = row["cwe"]
         if not cwe:
+            logger.warning(f"Row with vuln_id {row['vuln_id']} has no cwe, skipping.")
             continue
-        cwe_set = eval(cwe)
-        for cwe in cwe_set:
-            if (
-                row["prior_version"]
-                and len(row["prior_version"]) > 0
-                and row["after_version"]
-                and len(row["after_version"]) > 0
-            ):
 
-                stats = eval(row["stats"])
-                data = {
-                    "cwe": [cwe],
-                    "rejected": row["prior_version"],
-                    "chosen": row["after_version"],
-                    "additions": stats["additions"],
-                    "deletions": stats["deletions"],
-                    "total": stats["total"],
-                    "vuln_id": row["vuln_id"],
-                    "score": row["score"],
-                    "published_date": row["published_date"],
-                    "commit_href": row["commit_href"],
-                }
-                write_jsonl(
-                    data,
-                    os.path.join(directory + "/" + "data", cwe + ".jsonl"),
-                    append=True,
-                )
+        if (
+            row["prior_version"]
+            and len(row["prior_version"]) > 0
+            and row["after_version"]
+            and len(row["after_version"]) > 0
+        ):
+
+            stats = eval(row["stats"])
+            data = {
+                "cwe": [cwe],
+                "rejected": row["prior_version"],
+                "chosen": row["after_version"],
+                "additions": stats["additions"],
+                "deletions": stats["deletions"],
+                "total": stats["total"],
+                "vuln_id": row["vuln_id"],
+                "score": row["score"],
+                "published_date": row["published_date"],
+                "commit_href": row["commit_href"],
+            }
+            write_jsonl(
+                data,
+                os.path.join(directory + "/" + "data", cwe + ".jsonl"),
+                append=True,
+            )
+            counter += 1
+
+    print(f"Total samples written: {counter}")
 
 
 if __name__ == "__main__":

@@ -83,7 +83,7 @@ def compute_framework(model, tokenizer, prompt, continuation):
 
 def dpo_loss(chosen_logprob, rejected_logprob, beta=1.0):
     delta = beta * (chosen_logprob - rejected_logprob)
-    return F.softplus(-delta)           # preferred: stable for large ±delta
+    return F.softplus(-delta)  # preferred: stable for large ±delta
     # return -F.logsigmoid(delta)       # also stable and equivalent
 
 
