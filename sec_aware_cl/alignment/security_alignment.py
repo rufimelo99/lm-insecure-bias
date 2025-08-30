@@ -200,9 +200,11 @@ def run_job(model_name: str, directory: str, output_dir: str, raw_data_csv_path:
                     [
                         {
                             "cwe": cwe,
-                            "snippet": data["snippet"],
-                            "chosen_logprob": chosen_logprob,
-                            "rejected_logprob": rejected_logprob,
+                            "vuln_id": data["vuln_id"],
+                            "vuln_snippet": rejected,
+                            "safe_snippet": chosen,
+                            "vuln_logprob": rejected_logprob,
+                            "safe_logprob": chosen_logprob,
                             "vuln_ppl": rejected_ppl,
                             "safe_ppl": chosen_ppl,
                             "vuln_uncertainty": rejected_uncertainty,
