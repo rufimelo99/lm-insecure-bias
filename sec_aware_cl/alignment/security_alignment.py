@@ -3,6 +3,7 @@ import json
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from turtle import pd
 from typing import Any, Dict, List
 
 import torch
@@ -94,7 +95,13 @@ def write_jsonl(data: json, file_path, append=False):
         f.write(json.dumps(data) + "\n")
 
 
-def run_job(model_name: str, directory: str, output_dir: str):
+def save_raw_data_to_csv(raw_data: List[Dict[str, Any]], file_path: str, append=False):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    df = pd.DataFrame(raw_data)
+    df.to_csv(file_path, index=False, mode="a" if append else "w")
+
+
+def run_job(model_name: str, directory: str, output_dir: str, raw_data_csv_path: str):
     device_map = "auto"
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -189,6 +196,23 @@ def run_job(model_name: str, directory: str, output_dir: str):
                 ppl_diff = rejected_ppl - chosen_ppl
                 uncertainty_diff = rejected_uncertainty - chosen_uncertainty
 
+                save_raw_data_to_csv(
+                    [
+                        {
+                            "cwe": cwe,
+                            "snippet": data["snippet"],
+                            "chosen_logprob": chosen_logprob,
+                            "rejected_logprob": rejected_logprob,
+                            "vuln_ppl": rejected_ppl,
+                            "safe_ppl": chosen_ppl,
+                            "vuln_uncertainty": rejected_uncertainty,
+                            "safe_uncertainty": chosen_uncertainty,
+                        }
+                    ],
+                    os.path.join(output_dir, raw_data_csv_path),
+                    append=True,
+                )
+
                 if preferenced_aligned:
                     cwe_aligned_count += 1
 
@@ -196,14 +220,7 @@ def run_job(model_name: str, directory: str, output_dir: str):
                 data["aligned"] = preferenced_aligned
                 data["ppl_diff"] = ppl_diff
                 data["uncertainty_diff"] = uncertainty_diff
-                # logger.info(
-                #     f"""chosen_logprob: {chosen_logprob}, rejected_logprob: {rejected_logprob}
-                #     bt_loss: {loss.item()}
-                #     aligned: {preferenced_aligned}
-                #     ppl_diff: {ppl_diff}
-                #     uncertainty_diff: {uncertainty_diff}
-                #     """
-                # )
+
                 snippets.append(data)
 
         alignemnt_dict[cwe].append(
@@ -243,13 +260,19 @@ def run_from_config(cfg: Dict[str, Any]):
         model_name = job.get("model")
         output_dir = job.get("output_dir")
         directory = job.get("directory", global_directory)
+        raw_data_csv_path = job.get("raw_data_csv_path", cfg.get("raw_data_csv_path"))
         name = job.get("name", model_name)
 
         if not model_name or not output_dir:
             raise ValueError(f"Model entry #{i} missing 'model' or 'output_dir'.")
 
         logger.info(f"Starting job {i}/{len(models)}: {name}")
-        run_job(model_name=model_name, directory=directory, output_dir=output_dir)
+        run_job(
+            model_name=model_name,
+            directory=directory,
+            output_dir=output_dir,
+            raw_data_csv_path=raw_data_csv_path,
+        )
         logger.info(f"Finished job {i}/{len(models)}: {name}")
 
 
