@@ -97,6 +97,7 @@ def write_jsonl(data: json, file_path, append=False):
 
 def save_raw_data_to_csv(raw_data: List[Dict[str, Any]], file_path: str, append=False):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    breakpoint()
     df = pd.DataFrame(raw_data)
     df.to_csv(file_path, index=False, mode="a" if append else "w")
 
