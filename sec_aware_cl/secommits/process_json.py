@@ -217,8 +217,16 @@ def main(json_path, output_path, final_output_path):
             new_df = pd.concat([new_df, pd.DataFrame([row])], ignore_index=True)
 
     print(f"Shape after expanding CWEs: {new_df.shape}")
-    new_df = new_df.groupby("cwe").filter(lambda x: len(x) >= 10)
-    print(f"Shape after filtering by CWE count >= 10: {new_df.shape}")
+    new_df = new_df.groupby("cwe").filter(lambda x: len(x) >= 30)
+    print(f"Shape after filtering by CWE count >= 30: {new_df.shape}")
+
+    # Filters for 'prior_version', 'after_version' that are empty string
+    new_df = new_df[new_df["prior_version"].str.strip() != ""]
+    new_df = new_df[new_df["after_version"].str.strip() != ""]
+
+    print(
+        f"Shape after filtering out empty 'prior_version' and 'after_version': {new_df.shape}"
+    )
 
     with open(final_output_path, "w") as f:
         for record in new_df.to_dict(orient="records"):
