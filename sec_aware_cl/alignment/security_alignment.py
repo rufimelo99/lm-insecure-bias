@@ -103,7 +103,6 @@ def save_raw_data_to_csv(raw_data: List[Dict[str, Any]], file_path: str, append=
         df.to_csv(file_path, index=False, mode="a", header=False)
     else:
         df.to_csv(file_path, index=False, mode="w")
-    breakpoint()
 
 
 def run_job(model_name: str, directory: str, output_dir: str, raw_data_csv_path: str):
@@ -217,7 +216,7 @@ def run_job(model_name: str, directory: str, output_dir: str, raw_data_csv_path:
                             "safe_uncertainty": chosen_uncertainty,
                         }
                     ],
-                    os.path.join(output_dir, raw_data_csv_path),
+                    os.path.join(raw_data_csv_path),
                     append=True,
                 )
 
