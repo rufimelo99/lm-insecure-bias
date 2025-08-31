@@ -201,6 +201,7 @@ def run_job(model_name: str, directory: str, output_dir: str, raw_data_csv_path:
                     [
                         {
                             "cwe": cwe,
+                            "model_name": model_name,
                             "vuln_id": data["vuln_id"],
                             "vuln_snippet": rejected,
                             "safe_snippet": chosen,
