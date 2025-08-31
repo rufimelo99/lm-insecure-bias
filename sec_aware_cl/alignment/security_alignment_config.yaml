@@ -1,4 +1,5 @@
-directory: alignment/datasets/
+raw_data_csv_path: artifacts/security_alignment/raw_data.csv
+directory: artifacts/security_alignment/
 models:
   - name: starcoder7b
     output_dir: artifacts/security_alignment/starcoder7b_results
