@@ -42,6 +42,7 @@ docker run -it --rm --gpus all \
   rufimelo/lm-insecure-bias:latest \
   bash
 ```
+Once inside the container, you can run any of the steps normally.
 
 ## Local Installation
 ```bash
@@ -198,8 +199,6 @@ python sec_aware_cl/alignment/analysis.py
 python sec_aware_cl/alignment/analysis.py --artifacts path/to/artifacts
 ```
 
-Pass `--length-sensitivity` to also run the token-length sensitivity analysis (requires Hugging Face tokenizers and network access).
-
 ### Option B — Jupyter notebook (interactive)
 
 ```bash
@@ -209,101 +208,6 @@ jupyter notebook sec_aware_cl/alignment/analysis.ipynb
 ```
 
 The notebook reads from `artifacts/security_alignment/` and `artifacts/security_alignment/raw_data.csv` and generates all figures saved to `artifacts/plots/`.
-
----
-
-## Running with Docker
-
-The Docker image bundles the source code and all pre-computed artifacts. It is primarily useful for three things:
-
-| Use case | GPU needed? | Notes |
-|----------|-------------|-------|
-| Smoke test + analysis notebook | No | Artifacts already baked into image |
-| Re-running Steps 1–2 or 4 | No | Mount `artifacts/` to persist output |
-| Re-running Step 3 (model inference) | Yes | Mount `artifacts/` to persist output |
-
-> **Key point**: any files written inside a container are lost when it exits. Mount your local `artifacts/` directory with `-v $(pwd)/artifacts:/workspace/artifacts` whenever you want to save or overwrite outputs to disk.
-
-### Build
-
-```bash
-docker build -t lm-insecure-bias .
-```
-
-### Smoke test (verifies the image and pre-computed artifacts)
-
-```bash
-# Artifacts are already inside the image — no volume mount needed
-docker run --rm lm-insecure-bias python validate.py
-```
-
-### Analysis / figures (CPU, no GPU required)
-
-The pre-computed results are baked into the image. No volume mount is needed to _read_ them. Mount `artifacts/` only if you want the generated plots saved back to your host.
-
-```bash
-# Option A: script (headless, no browser needed) — saves plots to artifacts/plots/
-docker run --rm \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  python sec_aware_cl/alignment/analysis.py
-
-# Option B: notebook (interactive browser UI)
-docker run --rm -p 8888:8888 \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  jupyter notebook --ip=0.0.0.0 --no-browser --allow-root \
-    sec_aware_cl/alignment/analysis.ipynb
-```
-
-### Re-run Steps 1, 2, or 4 and save output to host
-
-These steps do not need a GPU. Mount `artifacts/` so the output is written back to your local directory.
-
-```bash
-# Step 1 — fetch GitHub diffs (requires GITHUB_BEARER_TOKEN and network access)
-docker run --rm \
-  -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  python sec_aware_cl/secommits/process_json.py \
-    --json_path artifacts/secommits-raw.json \
-    --output_path artifacts/secommits_filtered.jsonl \
-    --final_output_path artifacts/secommits_filtered_final.jsonl
-
-# Step 2 — rebuild per-CWE datasets
-docker run --rm \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  python sec_aware_cl/alignment/dataset_builder.py \
-    --directory artifacts/security_alignment \
-    --seccommit_osv artifacts/secommits_filtered_final.jsonl
-
-# Step 4 — merge per-model results
-docker run --rm \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  python sec_aware_cl/alignment/join_results.py \
-    --directories \
-      artifacts/security_alignment/codellama7b_results \
-      artifacts/security_alignment/codellama13b_results \
-      artifacts/security_alignment/starcoder7b_results \
-      artifacts/security_alignment/starcoder3b_results \
-      artifacts/security_alignment/mellum_results \
-      artifacts/security_alignment/deepseek_results \
-    --output_dir artifacts/security_alignment/all_models_results
-```
-
-### Step 3 — model inference (requires NVIDIA GPU + nvidia-container-toolkit)
-
-```bash
-docker run --rm --gpus all \
-  -e HF_TOKEN=$HF_TOKEN \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  lm-insecure-bias \
-  python sec_aware_cl/alignment/security_alignment.py \
-    --config sec_aware_cl/alignment/security_alignment_config.yaml
-```
 
 ---
 

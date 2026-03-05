@@ -23,7 +23,7 @@ COPY . /workspace/
 # All deps (including matplotlib, seaborn, scipy, jupyter) are in requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e . \
-    pip uninstall -y torch torchvision torchaudio \
+    pip uninstall torch torchvision torchaudio \
     pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2   --index-url https://download.pytorch.org/whl/cu121
 
 
