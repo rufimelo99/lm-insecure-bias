@@ -71,10 +71,8 @@ export HF_TOKEN=your_huggingface_token_here
 
 
 ## Recommended Workflow for Artifact Evaluators
-1. **Skip Steps 1–3** since all intermediate and final artifacts are already included in the repository under `artifacts/`. These steps require GPU and internet access, so skipping them allows you to validate the analysis and reproduce figures without needing those resources.
-2. **Run Step 4** to merge the pre-computed per-model results into a single directory for analysis.
-3. **Open and run the analysis notebook** (`sec_aware_cl/alignment/analysis.ipynb`) to reproduce all figures from the paper using the pre-computed results.
-
+1. **Skip Steps 1–4** since all intermediate and final artifacts are already included in the repository under `artifacts/`. These steps require GPU and internet access, so skipping them allows you to validate the analysis and reproduce figures without needing those resources. 
+3. **Open and run the analysis notebook** (`sec_aware_cl/alignment/analysis.ipynb`) to reproduce all figures from the paper using the pre-computed results or run the `analysis.py` script for a headless option. The notebook/script reads from the pre-computed results in `artifacts/security_alignment/` and generates all publication-ready figures saved to `artifacts/plots/`.
 
 ---
 
