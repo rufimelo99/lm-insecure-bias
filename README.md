@@ -4,7 +4,7 @@ This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecu
 
 We frame security alignment as a preference problem inspired by Direct Preference Optimization (DPO): for each vulnerable/safe code pair from real-world security commits, we measure whether the model assigns higher log-probability to the safe version (`chosen`) than to the vulnerable version (`rejected`). We additionally report perplexity differences and token-level entropy (uncertainty).
 
-**Dataset**: The final alignment dataset (DeltaSeCommits) is publicly available on Hugging Face: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits)
+**Dataset**: The final alignment dataset is publicly available on Hugging Face: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits)
 
 ---
 
@@ -13,6 +13,7 @@ We frame security alignment as a preference problem inspired by Direct Preferenc
 - **Python 3.10+**
 - **CUDA-capable GPU** with ≥16 GB VRAM (for running model inference in Step 3). The models are loaded in 4-bit quantization (NF4) via `bitsandbytes`. CPU-only runs are not supported for Step 3.
 - **GitHub Personal Access Token** — required for Step 1 (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
+  - As of March 2026, the GitHub API token can be obtained by going to `https://github.com/settings/personal-access-tokens/new` and generating a new token with `Public repositories` access.
 - **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
 
 > **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) or [Step 4](#step-4-merge-results) to validate the analysis without running model inference.
