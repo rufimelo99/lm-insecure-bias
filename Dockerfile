@@ -20,12 +20,9 @@ COPY . /workspace/
 
 
 # ---- Python dependencies ------------------------------------------------
-# Install the package in editable mode (reads requirements.txt via setup.py)
+# All deps (including matplotlib, seaborn, scipy, jupyter) are in requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e .
-
-# Install Jupyter for the analysis notebook
-RUN pip install --no-cache-dir jupyter nbconvert
 
 # ---- Environment variables -----------------------------------------------
 # Pass your tokens at runtime via --env or -e flags; do not bake them in.

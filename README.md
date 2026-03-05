@@ -1,6 +1,6 @@
 # Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment
 
-This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment"*. The paper investigates whether code-focused Large Language Models (LLMs) are probabilistically aligned with secure coding practices.
+This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment"*.
 
 We frame security alignment as a preference problem inspired by Direct Preference Optimization (DPO): for each vulnerable/safe code pair from real-world security commits, we measure whether the model assigns higher log-probability to the safe version (`chosen`) than to the vulnerable version (`rejected`). We additionally report perplexity differences and token-level entropy (uncertainty).
 
@@ -15,12 +15,35 @@ We frame security alignment as a preference problem inspired by Direct Preferenc
 - **GitHub Personal Access Token** — required for Step 1 (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
   - As of March 2026, the GitHub API token can be obtained by going to `https://github.com/settings/personal-access-tokens/new` and generating a new token with `Public repositories` access.
 - **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
+- **Docker** (optional, but recommended for artifact evaluators to easily run the analysis notebook and reproduce figures without needing a GPU or internet access)
 
-> **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) or [Step 4](#step-4-merge-results) to validate the analysis without running model inference.
-
+> **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) or [Step 4](#step-4-merge-results) to validate the analysis without running model inference. Regardless, we recommend using the provided Docker image for a pre-configured environment with all artifacts included, which allows you to run the analysis notebook and reproduce all figures without needing GPU or internet access.
 ---
 
-## Installation
+
+## Docker Image usage
+```bash
+# 1. Download the docker image uploaded to Docker Hub for a pre-configured environment with all artifacts included:
+docker pull rufimelo/lm-insecure-bias:latest
+
+# 2. Set your GitHub token (needed for Step 1 only)
+export GITHUB_BEARER_TOKEN=your_github_token_here
+
+# 3. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
+huggingface-cli login
+or 
+export HF_TOKEN=your_huggingface_token_here
+
+# 4. Run the container with an interactive shell, mounting the `artifacts/` directory so you can read/write files:
+docker run -it --rm --gpus all \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
+  -e HF_TOKEN=$HF_TOKEN \
+  rufimelo/lm-insecure-bias:latest \
+  bash
+```
+
+## Local Installation
 ```bash
 # 1. Clone the repository with submodules
 git clone --recurse-submodules https://github.com/rufimelo99/lm-insecure-bias.git
@@ -38,10 +61,19 @@ export GITHUB_BEARER_TOKEN=your_github_token_here
 
 # 5. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
-
-# 6. (Recommended) Download the docker image uploaded to Docker Hub for a pre-configured environment with all artifacts included:
-docker pull rufimelo/lm-insecure-bias:latest
+or 
+export HF_TOKEN=your_huggingface_token_here
 ```
+
+
+  
+
+
+## Recommended Workflow for Artifact Evaluators
+1. **Skip Steps 1–3** since all intermediate and final artifacts are already included in the repository under `artifacts/`. These steps require GPU and internet access, so skipping them allows you to validate the analysis and reproduce figures without needing those resources.
+2. **Run Step 4** to merge the pre-computed per-model results into a single directory for analysis.
+3. **Open and run the analysis notebook** (`sec_aware_cl/alignment/analysis.ipynb`) to reproduce all figures from the paper using the pre-computed results.
+
 
 ---
 
@@ -155,7 +187,20 @@ python sec_aware_cl/alignment/join_results.py \
 
 ## Reproducing Figures from Pre-computed Results
 
-All model results are already included under `artifacts/security_alignment/`. To reproduce the paper's figures without running model inference, open and run the analysis notebook:
+All model results are already included under `artifacts/security_alignment/`. Two equivalent ways to reproduce all paper figures without running model inference:
+
+### Option A — Python script (recommended, headless)
+
+```bash
+conda activate cl
+python sec_aware_cl/alignment/analysis.py
+# or with a custom artifacts path:
+python sec_aware_cl/alignment/analysis.py --artifacts path/to/artifacts
+```
+
+Pass `--length-sensitivity` to also run the token-length sensitivity analysis (requires Hugging Face tokenizers and network access).
+
+### Option B — Jupyter notebook (interactive)
 
 ```bash
 conda activate cl
@@ -192,17 +237,18 @@ docker build -t lm-insecure-bias .
 docker run --rm lm-insecure-bias python validate.py
 ```
 
-### Analysis notebook (CPU, no GPU required)
+### Analysis / figures (CPU, no GPU required)
 
 The pre-computed results are baked into the image. No volume mount is needed to _read_ them. Mount `artifacts/` only if you want the generated plots saved back to your host.
 
 ```bash
-# Read-only (plots saved inside the container, discarded on exit)
-docker run --rm -p 8888:8888 lm-insecure-bias \
-  jupyter notebook --ip=0.0.0.0 --no-browser --allow-root \
-    sec_aware_cl/alignment/analysis.ipynb
+# Option A: script (headless, no browser needed) — saves plots to artifacts/plots/
+docker run --rm \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  lm-insecure-bias \
+  python sec_aware_cl/alignment/analysis.py
 
-# Save generated plots back to your host
+# Option B: notebook (interactive browser UI)
 docker run --rm -p 8888:8888 \
   -v $(pwd)/artifacts:/workspace/artifacts \
   lm-insecure-bias \
