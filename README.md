@@ -85,9 +85,6 @@ lm-insecure-bias/
 │       ├── mean_pref_cwe_model.pdf            # Mean preference per CWE and model
 │       ├── Wilcoxon_*.pdf                     # Wilcoxon signed-rank test results
 │       └── rebuttal/                          # Additional figures from author rebuttal
-│
-└── PurpleLlama/                       # Git submodule: provides the longppl package
-                                       # used to compute long-sequence perplexity
 ```
 
 ---
@@ -123,6 +120,18 @@ export GITHUB_BEARER_TOKEN=your_github_token_here
 # 5. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
 ```
+
+---
+
+## Smoke Test (no GPU required)
+
+After installation, run the validation script to verify that the environment is correctly set up, all artifact files are present and parseable, and the CPU-only steps (dataset building and result merging) reproduce the committed outputs:
+
+```bash
+python validate.py
+```
+
+Expected output: every check prints `[OK]` and the script exits 0. This does **not** require a GPU, a GitHub token, or downloading any models.
 
 ---
 

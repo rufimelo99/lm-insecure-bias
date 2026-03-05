@@ -33,8 +33,8 @@ RUN pip install --no-cache-dir jupyter nbconvert
 #   docker run --rm -e GITHUB_BEARER_TOKEN=ghp_... -e HF_TOKEN=hf_... ...
 ENV PYTHONUNBUFFERED=1
 
-# ---- Default command: show usage -----------------------------------------
-CMD ["python", "-c", "\
+# ---- Default command: run smoke test then show usage ---------------------
+CMD ["bash", "-c", "python validate.py && python -c \"\
 print('Image ready.'); \
 print(''); \
 print('Available entry points:'); \
@@ -52,4 +52,4 @@ print('    python sec_aware_cl/alignment/join_results.py --directories artifacts
 print(''); \
 print('  Analysis notebook (CPU only):'); \
 print('    jupyter notebook --ip=0.0.0.0 --no-browser --allow-root sec_aware_cl/alignment/analysis.ipynb'); \
-"]
+\""]
