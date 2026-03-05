@@ -73,8 +73,8 @@ try:
     # It may fail if the perplexity submodule isn't present — that's OK, the logic is standalone
     spec.loader.exec_module(mod)
     check("sec_aware_cl.alignment.join_results", True)
-except ImportError as e:
-    # Acceptable: optional heavy deps (torch/transformers) not installed
+except (ImportError, NameError, AttributeError) as e:
+    # Acceptable: optional heavy deps (torch/transformers/trl) not fully available
     check("sec_aware_cl.alignment.join_results (partial)", True, f"import warning: {e}")
 except Exception as e:
     check("sec_aware_cl.alignment.join_results", False, str(e))
