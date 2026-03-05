@@ -8,89 +8,6 @@ We frame security alignment as a preference problem inspired by Direct Preferenc
 
 ---
 
-## Repository Structure
-
-```
-lm-insecure-bias/
-├── README.md                          # This file
-├── requirements.txt                   # Python dependencies
-├── setup.py                           # Package installation script
-├── Dockerfile                         # Docker image for reproducibility
-├── fmt.sh                             # Code formatting script (black + isort)
-│
-├── sec_aware_cl/                      # Main source package
-│   ├── __init__.py
-│   ├── logger.py                      # Structured logger (structlog-based)
-│   ├── schemas.py                     # Enum definitions for models and datasets
-│   │
-│   ├── secommits/
-│   │   └── process_json.py            # Step 1 — Processes the raw SeCommits dataset:
-│   │                                  #   fetches commit diffs from GitHub API,
-│   │                                  #   filters by language/CWE/patch size, and
-│   │                                  #   produces secommits_filtered_final.jsonl
-│   │
-│   └── alignment/
-│       ├── dataset_builder.py         # Step 2 — Converts the filtered SeCommits JSONL
-│       │                              #   into per-CWE DPO-style datasets (chosen/rejected pairs)
-│       │                              #   stored under artifacts/security_alignment/data/
-│       ├── security_alignment.py      # Step 3 — Core analysis script:
-│       │                              #   loads each model, runs forward passes on
-│       │                              #   chosen/rejected pairs, computes log-probability,
-│       │                              #   perplexity, uncertainty, and DPO loss,
-│       │                              #   and saves per-CWE JSONL results
-│       ├── security_alignment_config.yaml  # YAML configuration listing models and output dirs
-│       ├── join_results.py            # Step 4 — Merges per-model result directories into
-│       │                              #   a single all_models_results/ directory
-│       └── analysis.ipynb             # Jupyter notebook for statistical analysis and
-│                                      #   generating all paper figures
-│
-├── artifacts/
-│   ├── secommits-raw.json             # Raw SeCommits dataset (OSV-sourced security commits)
-│   ├── secommits_filtered.jsonl       # Intermediate: after fetching GitHub diffs
-│   ├── secommits_filtered_final.jsonl # Final cleaned dataset with prior/after code versions
-│   │
-│   ├── defects4j.csv                  # Defects4J dataset reference (used in analysis)
-│   ├── gbug-java.csv                  # GBug-Java dataset reference (used in analysis)
-│   │
-│   ├── security_alignment/
-│   │   ├── data/                      # Per-CWE alignment datasets (chosen/rejected pairs)
-│   │   │   └── CWE-*.jsonl            # One file per CWE; each line has:
-│   │   │                              #   cwe, chosen (safe code), rejected (vuln code),
-│   │   │                              #   vuln_id, score, commit_href, etc.
-│   │   │
-│   │   ├── raw_data.csv               # Flat CSV with all per-sample model scores
-│   │   │                              #   (model, cwe, vuln_id, logprob, ppl, uncertainty)
-│   │   │
-│   │   ├── codellama7b_results/       # Results for CodeLlama-7B
-│   │   ├── codellama13b_results/      # Results for CodeLlama-13B
-│   │   ├── starcoder7b_results/       # Results for StarCoder2-7B
-│   │   ├── starcoder3b_results/       # Results for StarCoder2-3B
-│   │   ├── mellum_results/            # Results for JetBrains Mellum-4B
-│   │   ├── deepseek_results/          # Results for DeepSeek-Coder-6.7B
-│   │   │
-│   │   │   # Each model results directory contains:
-│   │   │   #   CWE-*.jsonl            — per-CWE results with per-sample scores,
-│   │   │   #                            dpo_loss, alignment flag, ppl_diff,
-│   │   │   #                            uncertainty_diff, and raw logprobs/ppl
-│   │   │   #   alignment_stats.jsonl  — summary: aligned_count and total_count per CWE
-│   │   │
-│   │   └── all_models_results/        # Merged results from all 6 models
-│   │       └── CWE-*.jsonl            # One entry per model per CWE
-│   │
-│   └── plots/                         # Publication-ready PDF figures
-│       ├── alignemnt_graph_shorter.pdf        # Main alignment results figure
-│       ├── dataset_distribution.pdf           # Dataset statistics
-│       ├── ppl_diff_all.pdf                   # Perplexity differences across models/CWEs
-│       ├── ppl_diff_uncertainty_all.pdf       # Uncertainty (entropy) differences
-│       ├── figure5_replacement_dpo_heatmap.pdf # DPO loss heatmap
-│       ├── figure5b_avg_dpo_per_model.pdf     # Average DPO loss per model
-│       ├── mean_pref_cwe_model.pdf            # Mean preference per CWE and model
-│       ├── Wilcoxon_*.pdf                     # Wilcoxon signed-rank test results
-│       └── rebuttal/                          # Additional figures from author rebuttal
-```
-
----
-
 ## Prerequisites
 
 - **Python 3.10+**
@@ -294,6 +211,90 @@ docker run --rm --gpus all \
 | **PPL diff** | `ppl(vulnerable) − ppl(safe)`; positive = model finds vulnerable code more surprising |
 | **Uncertainty** | Mean Shannon entropy over token distributions; lower = more confident |
 | **DPO loss** | `softplus(−β · (logprob(safe) − logprob(vulnerable)))`; lower = better alignment |
+
+---
+
+
+## Repository Structure
+
+```
+lm-insecure-bias/
+├── README.md                          # This file
+├── requirements.txt                   # Python dependencies
+├── setup.py                           # Package installation script
+├── Dockerfile                         # Docker image for reproducibility
+├── fmt.sh                             # Code formatting script (black + isort)
+│
+├── sec_aware_cl/                      # Main source package
+│   ├── __init__.py
+│   ├── logger.py                      # Structured logger (structlog-based)
+│   ├── schemas.py                     # Enum definitions for models and datasets
+│   │
+│   ├── secommits/
+│   │   └── process_json.py            # Step 1 — Processes the raw SeCommits dataset:
+│   │                                  #   fetches commit diffs from GitHub API,
+│   │                                  #   filters by language/CWE/patch size, and
+│   │                                  #   produces secommits_filtered_final.jsonl
+│   │
+│   └── alignment/
+│       ├── dataset_builder.py         # Step 2 — Converts the filtered SeCommits JSONL
+│       │                              #   into per-CWE DPO-style datasets (chosen/rejected pairs)
+│       │                              #   stored under artifacts/security_alignment/data/
+│       ├── security_alignment.py      # Step 3 — Core analysis script:
+│       │                              #   loads each model, runs forward passes on
+│       │                              #   chosen/rejected pairs, computes log-probability,
+│       │                              #   perplexity, uncertainty, and DPO loss,
+│       │                              #   and saves per-CWE JSONL results
+│       ├── security_alignment_config.yaml  # YAML configuration listing models and output dirs
+│       ├── join_results.py            # Step 4 — Merges per-model result directories into
+│       │                              #   a single all_models_results/ directory
+│       └── analysis.ipynb             # Jupyter notebook for statistical analysis and
+│                                      #   generating all paper figures
+│
+├── artifacts/
+│   ├── secommits-raw.json             # Raw SeCommits dataset (OSV-sourced security commits)
+│   ├── secommits_filtered.jsonl       # Intermediate: after fetching GitHub diffs
+│   ├── secommits_filtered_final.jsonl # Final cleaned dataset with prior/after code versions
+│   │
+│   ├── defects4j.csv                  # Defects4J dataset reference (used in analysis)
+│   ├── gbug-java.csv                  # GBug-Java dataset reference (used in analysis)
+│   │
+│   ├── security_alignment/
+│   │   ├── data/                      # Per-CWE alignment datasets (chosen/rejected pairs)
+│   │   │   └── CWE-*.jsonl            # One file per CWE; each line has:
+│   │   │                              #   cwe, chosen (safe code), rejected (vuln code),
+│   │   │                              #   vuln_id, score, commit_href, etc.
+│   │   │
+│   │   ├── raw_data.csv               # Flat CSV with all per-sample model scores
+│   │   │                              #   (model, cwe, vuln_id, logprob, ppl, uncertainty)
+│   │   │
+│   │   ├── codellama7b_results/       # Results for CodeLlama-7B
+│   │   ├── codellama13b_results/      # Results for CodeLlama-13B
+│   │   ├── starcoder7b_results/       # Results for StarCoder2-7B
+│   │   ├── starcoder3b_results/       # Results for StarCoder2-3B
+│   │   ├── mellum_results/            # Results for JetBrains Mellum-4B
+│   │   ├── deepseek_results/          # Results for DeepSeek-Coder-6.7B
+│   │   │
+│   │   │   # Each model results directory contains:
+│   │   │   #   CWE-*.jsonl            — per-CWE results with per-sample scores,
+│   │   │   #                            dpo_loss, alignment flag, ppl_diff,
+│   │   │   #                            uncertainty_diff, and raw logprobs/ppl
+│   │   │   #   alignment_stats.jsonl  — summary: aligned_count and total_count per CWE
+│   │   │
+│   │   └── all_models_results/        # Merged results from all 6 models
+│   │       └── CWE-*.jsonl            # One entry per model per CWE
+│   │
+│   └── plots/                         # Publication-ready PDF figures
+│       ├── alignemnt_graph_shorter.pdf        # Main alignment results figure
+│       ├── dataset_distribution.pdf           # Dataset statistics
+│       ├── ppl_diff_all.pdf                   # Perplexity differences across models/CWEs
+│       ├── ppl_diff_uncertainty_all.pdf       # Uncertainty (entropy) differences
+│       ├── figure5_replacement_dpo_heatmap.pdf # DPO loss heatmap
+│       ├── figure5b_avg_dpo_per_model.pdf     # Average DPO loss per model
+│       ├── mean_pref_cwe_model.pdf            # Mean preference per CWE and model
+│       ├── Wilcoxon_*.pdf                     # Wilcoxon signed-rank test results
+│       └── rebuttal/                          # Additional figures from author rebuttal
+```
 
 ---
 
