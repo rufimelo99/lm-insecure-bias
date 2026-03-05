@@ -35,12 +35,14 @@ print("\n[1] Package imports")
 
 try:
     from sec_aware_cl.logger import logger  # noqa: F401
+
     check("sec_aware_cl.logger", True)
 except Exception as e:
     check("sec_aware_cl.logger", False, str(e))
 
 try:
     from sec_aware_cl.schemas import AvailableModels  # noqa: F401
+
     check("sec_aware_cl.schemas", True)
 except Exception as e:
     check("sec_aware_cl.schemas", False, str(e))
@@ -48,6 +50,7 @@ except Exception as e:
 try:
     # dataset_builder has no heavy imports
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "dataset_builder",
         os.path.join(REPO_ROOT, "sec_aware_cl/alignment/dataset_builder.py"),
@@ -61,6 +64,7 @@ except Exception as e:
 try:
     # join_results imports torch indirectly via sec_aware_cl.perplexity — catch gracefully
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "join_results",
         os.path.join(REPO_ROOT, "sec_aware_cl/alignment/join_results.py"),
@@ -95,7 +99,11 @@ for rel in required_files:
 # Per-CWE alignment datasets
 data_dir = os.path.join(ARTIFACTS, "security_alignment/data")
 cwe_files = [f for f in os.listdir(data_dir) if f.endswith(".jsonl")]
-check("security_alignment/data/ has JSONL files", len(cwe_files) > 0, f"{len(cwe_files)} files")
+check(
+    "security_alignment/data/ has JSONL files",
+    len(cwe_files) > 0,
+    f"{len(cwe_files)} files",
+)
 
 # Parse a few lines from one CWE file
 sample_file = os.path.join(data_dir, cwe_files[0])
@@ -125,7 +133,11 @@ model_dirs = [
 ]
 for mdir in model_dirs:
     path = os.path.join(ARTIFACTS, "security_alignment", mdir)
-    n = len([f for f in os.listdir(path) if f.endswith(".jsonl")]) if os.path.isdir(path) else 0
+    n = (
+        len([f for f in os.listdir(path) if f.endswith(".jsonl")])
+        if os.path.isdir(path)
+        else 0
+    )
     check(f"security_alignment/{mdir}", os.path.isdir(path), f"{n} JSONL files")
 
 # Merged results
@@ -170,7 +182,9 @@ with tempfile.TemporaryDirectory() as tmpdir:
     all_files: set = set()
     for d in src_dirs:
         all_files.update(
-            f for f in os.listdir(d) if f.endswith(".jsonl") and f != "alignment_stats.jsonl"
+            f
+            for f in os.listdir(d)
+            if f.endswith(".jsonl") and f != "alignment_stats.jsonl"
         )
 
     written = 0
@@ -200,7 +214,11 @@ with tempfile.TemporaryDirectory() as tmpdir:
             fh.write("\n".join(out_lines) + "\n")
         written += 1
 
-    check("join_results produces output files", written > 0, f"{written} CWE files written")
+    check(
+        "join_results produces output files",
+        written > 0,
+        f"{written} CWE files written",
+    )
 
     # Spot-check: compare one file against the committed merged result
     spot = sorted(all_files)[0]
@@ -237,8 +255,14 @@ with tempfile.TemporaryDirectory() as tmpdir:
         file_path=os.path.join(ARTIFACTS, "secommits_filtered_final.jsonl"),
         directory=tmpdir,
     )
-    produced = [f for f in os.listdir(os.path.join(tmpdir, "data")) if f.endswith(".jsonl")]
-    check("dataset_builder produces per-CWE files", len(produced) > 0, f"{len(produced)} files")
+    produced = [
+        f for f in os.listdir(os.path.join(tmpdir, "data")) if f.endswith(".jsonl")
+    ]
+    check(
+        "dataset_builder produces per-CWE files",
+        len(produced) > 0,
+        f"{len(produced)} files",
+    )
 
     # Verify same CWE set as committed
     committed_cwes = {f for f in os.listdir(data_dir) if f.endswith(".jsonl")}
