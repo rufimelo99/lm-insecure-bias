@@ -21,7 +21,6 @@ We frame security alignment as a preference problem inspired by Direct Preferenc
 ---
 
 ## Installation
-
 ```bash
 # 1. Clone the repository with submodules
 git clone --recurse-submodules https://github.com/rufimelo99/lm-insecure-bias.git
@@ -39,19 +38,10 @@ export GITHUB_BEARER_TOKEN=your_github_token_here
 
 # 5. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
+
+# 6. (Recommended) Download the docker image uploaded to Docker Hub for a pre-configured environment with all artifacts included:
+docker pull rufimelo/lm-insecure-bias:latest
 ```
-
----
-
-## Smoke Test (no GPU required)
-
-After installation, run the validation script to verify that the environment is correctly set up, all artifact files are present and parseable, and the CPU-only steps (dataset building and result merging) reproduce the committed outputs:
-
-```bash
-python validate.py
-```
-
-Expected output: every check prints `[OK]` and the script exits 0. This does **not** require a GPU, a GitHub token, or downloading any models.
 
 ---
 
@@ -59,11 +49,20 @@ Expected output: every check prints `[OK]` and the script exits 0. This does **n
 
 The pipeline has four steps. **Steps 1–3 require a GPU and internet access.** All intermediate and final artifacts are already included in `artifacts/`, so evaluators can skip ahead.
 
-### Step 1 — Process the Raw SeCommits Dataset
+### Step 1 — Process the Raw Secommits Dataset (Data already present in `artifacts/`)
 
 Fetches commit diffs from the GitHub API and produces a filtered JSONL with `prior_version` (vulnerable) and `after_version` (safe) code snippets.
 
 > The final dataset produced by this step is also available directly on Hugging Face at [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits), so you can skip Steps 1–2 and load it from there.
+
+#### Run through Docker (recommended for artifact evaluators)
+First, start an interactive shell in the Docker container with the `artifacts/` directory mounted so you can read/write files:
+```bash
+docker run -it --rm \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  rufimelo/lm-insecure-bias:latest \
+  bash
+```
 
 ```bash
 python sec_aware_cl/secommits/process_json.py \
@@ -170,32 +169,92 @@ The notebook reads from `artifacts/security_alignment/` and `artifacts/security_
 
 ## Running with Docker
 
-A `Dockerfile` is provided for a self-contained execution environment.
+The Docker image bundles the source code and all pre-computed artifacts. It is primarily useful for three things:
+
+| Use case | GPU needed? | Notes |
+|----------|-------------|-------|
+| Smoke test + analysis notebook | No | Artifacts already baked into image |
+| Re-running Steps 1–2 or 4 | No | Mount `artifacts/` to persist output |
+| Re-running Step 3 (model inference) | Yes | Mount `artifacts/` to persist output |
+
+> **Key point**: any files written inside a container are lost when it exits. Mount your local `artifacts/` directory with `-v $(pwd)/artifacts:/workspace/artifacts` whenever you want to save or overwrite outputs to disk.
 
 ### Build
 
 ```bash
-docker build -t security-aware-cl .
+docker build -t lm-insecure-bias .
 ```
 
-### Run the analysis notebook (CPU, no GPU required)
+### Smoke test (verifies the image and pre-computed artifacts)
 
 ```bash
+# Artifacts are already inside the image — no volume mount needed
+docker run --rm lm-insecure-bias python validate.py
+```
+
+### Analysis notebook (CPU, no GPU required)
+
+The pre-computed results are baked into the image. No volume mount is needed to _read_ them. Mount `artifacts/` only if you want the generated plots saved back to your host.
+
+```bash
+# Read-only (plots saved inside the container, discarded on exit)
+docker run --rm -p 8888:8888 lm-insecure-bias \
+  jupyter notebook --ip=0.0.0.0 --no-browser --allow-root \
+    sec_aware_cl/alignment/analysis.ipynb
+
+# Save generated plots back to your host
 docker run --rm -p 8888:8888 \
   -v $(pwd)/artifacts:/workspace/artifacts \
-  security-aware-cl \
+  lm-insecure-bias \
   jupyter notebook --ip=0.0.0.0 --no-browser --allow-root \
     sec_aware_cl/alignment/analysis.ipynb
 ```
 
-### Run model inference (requires NVIDIA GPU + nvidia-container-toolkit)
+### Re-run Steps 1, 2, or 4 and save output to host
+
+These steps do not need a GPU. Mount `artifacts/` so the output is written back to your local directory.
+
+```bash
+# Step 1 — fetch GitHub diffs (requires GITHUB_BEARER_TOKEN and network access)
+docker run --rm \
+  -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  lm-insecure-bias \
+  python sec_aware_cl/secommits/process_json.py \
+    --json_path artifacts/secommits-raw.json \
+    --output_path artifacts/secommits_filtered.jsonl \
+    --final_output_path artifacts/secommits_filtered_final.jsonl
+
+# Step 2 — rebuild per-CWE datasets
+docker run --rm \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  lm-insecure-bias \
+  python sec_aware_cl/alignment/dataset_builder.py \
+    --directory artifacts/security_alignment \
+    --seccommit_osv artifacts/secommits_filtered_final.jsonl
+
+# Step 4 — merge per-model results
+docker run --rm \
+  -v $(pwd)/artifacts:/workspace/artifacts \
+  lm-insecure-bias \
+  python sec_aware_cl/alignment/join_results.py \
+    --directories \
+      artifacts/security_alignment/codellama7b_results \
+      artifacts/security_alignment/codellama13b_results \
+      artifacts/security_alignment/starcoder7b_results \
+      artifacts/security_alignment/starcoder3b_results \
+      artifacts/security_alignment/mellum_results \
+      artifacts/security_alignment/deepseek_results \
+    --output_dir artifacts/security_alignment/all_models_results
+```
+
+### Step 3 — model inference (requires NVIDIA GPU + nvidia-container-toolkit)
 
 ```bash
 docker run --rm --gpus all \
-  -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
   -e HF_TOKEN=$HF_TOKEN \
   -v $(pwd)/artifacts:/workspace/artifacts \
-  security-aware-cl \
+  lm-insecure-bias \
   python sec_aware_cl/alignment/security_alignment.py \
     --config sec_aware_cl/alignment/security_alignment_config.yaml
 ```
