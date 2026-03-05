@@ -1,6 +1,6 @@
 # Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment
 
-This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment"*.
+This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment"*, accepted at the **IEEE International Conference on Software Testing, Verification and Validation (ICST) 2026**.
 
 We frame security alignment as a preference problem inspired by Direct Preference Optimization (DPO): for each vulnerable/safe code pair from real-world security commits, we measure whether the model assigns higher log-probability to the safe version (`chosen`) than to the vulnerable version (`rejected`). We additionally report perplexity differences and token-level entropy (uncertainty).
 
@@ -8,22 +8,87 @@ We frame security alignment as a preference problem inspired by Direct Preferenc
 
 ---
 
-## Prerequisites
+## Purpose
 
-- **Python 3.10+**
-- **CUDA-capable GPU** with ≥16 GB VRAM (for running model inference in Step 3). The models are loaded in 4-bit quantization (NF4) via `bitsandbytes`. CPU-only runs are not supported for Step 3.
-- **GitHub Personal Access Token** — required for Step 1 (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
-  - As of March 2026, the GitHub API token can be obtained by going to `https://github.com/settings/personal-access-tokens/new` and generating a new token with `Public repositories` access.
-- **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
-- **Docker** (optional, but recommended for artifact evaluators to easily run the analysis notebook and reproduce figures without needing a GPU or internet access)
+This artifact enables **reproducible measurement of security alignment in code-focused LLMs** by analyzing the probabilities that models assign to **secure vs. vulnerable code variants**.
 
-> **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) or [Step 4](#step-4-merge-results) to validate the analysis without running model inference. Regardless, we recommend using the provided Docker image for a pre-configured environment with all artifacts included, which allows you to run the analysis notebook and reproduce all figures without needing GPU or internet access.
+### 1. Scripts for creating DeltaSecommits
+The artifact includes scripts to process the raw SeCommits dataset (sourced from OSV) and produce a dataset of vulnerable/safe code pairs derived from real-world security commits, filtered by CWE and patch size.
+The dataset is also available directly on Hugging Face at [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits).
+
+
+### 2. Measuring Security Alignment with Probabilistic Signals
+
+The framework evaluates whether a model **probabilistically prefers secure code** by comparing token-level likelihoods between vulnerable code and its patched counterpart, using three complementary signals:
+
+- **Preference** (Log-probability) — which variant the model is more likely to generate
+- **Fluency** (Perplexity) — how natural each code variant appears to the model
+- **Confidence** (Entropy) — how certain the model is about its token predictions
+
+
+
+All data, pre-computed model results, and analysis scripts are included to reproduce every figure and statistical test in the paper **without requiring GPU access or model re-inference**. The full pipeline is also provided for those with GPU access who wish to validate the entire process.
+
+**Artifact badges claimed**: *Artifact Available* (hosted on GitHub and Docker Hub) and *Artifact Reviewed* (functional, documented, and reproducible).
+
 ---
 
+## Provenance
 
-## Docker Image usage
+- **Paper**: *Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment* — Melo, Rui and Reis, Sofia and Catarino, Andre and Abreu, Rui. ICST 2026, IEEE.
+- **GitHub repository**: [https://github.com/rufimelo99/lm-insecure-bias](https://github.com/rufimelo99/lm-insecure-bias)
+- **Docker image**: [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias)
+- **Dataset**: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits) on Hugging Face
+
+
+---
+
+## Data
+
+| File / Directory | Description | Size (approx.) |
+|---|---|---|
+| `artifacts/secommits-raw.json` | Raw SeCommits dataset (OSV-sourced) | ~50 MB |
+| `artifacts/secommits_filtered_final.jsonl` | Cleaned dataset with vulnerable/safe code pairs | ~15 MB |
+| `artifacts/security_alignment/data/CWE-*.jsonl` | Per-CWE DPO-style alignment datasets | ~5 MB |
+| `artifacts/security_alignment/raw_data.csv` | Flat CSV of all per-sample model scores | ~10 MB |
+| `artifacts/security_alignment/*_results/` | Per-model result JSONL files (6 models) | ~30 MB total |
+| `artifacts/security_alignment/all_models_results/` | Merged results across all models | ~5 MB |
+| `artifacts/plots/` | Pre-generated PDF figures from the paper | ~10 MB |
+
+**Total disk space required**: ~130 MB (all artifacts are already included in the repository).
+
+All data is derived from publicly available sources (OSV vulnerability database, public GitHub commits).
+
+---
+
+## Setup
+
+### Hardware Requirements
+
+| Task | Requirement |
+|------|-------------|
+| Reproducing figures (Steps 4 + Analysis) | Any machine with Python 3.10+; no GPU needed |
+| Re-running model inference (Step 3) | CUDA-capable GPU with **≥ 16 GB VRAM** |
+
+The models are loaded in 4-bit NF4 quantization via `bitsandbytes`. CPU-only inference is not supported for Step 3. All other steps (data processing, analysis, figure generation) run on CPU.
+
+### Software Requirements
+
+- **Python 3.10+**
+- **Conda** (recommended) or any Python virtual environment manager
+- **GitHub Personal Access Token** — required for Step 1 only (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
+  - As of March 2026, obtain a token at `https://github.com/settings/personal-access-tokens/new` with `Public repositories` access.
+- **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
+- **Docker** (optional, but recommended for artifact evaluators — provides a fully pre-configured environment without GPU or internet access)
+
+> **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) to validate the analysis without running model inference. We recommend using the provided Docker image for the simplest setup.
+
+---
+
+## Docker Image Usage
+
 ```bash
-# 1. Download the docker image uploaded to Docker Hub for a pre-configured environment with all artifacts included:
+# 1. Download the pre-configured Docker image (all artifacts included):
 docker pull rufimelo/lm-insecure-bias:latest
 
 # 2. Set your GitHub token (needed for Step 1 only)
@@ -31,10 +96,10 @@ export GITHUB_BEARER_TOKEN=your_github_token_here
 
 # 3. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
-or 
+# or:
 export HF_TOKEN=your_huggingface_token_here
 
-# 4. Run the container with an interactive shell, mounting the `artifacts/` directory so you can read/write files:
+# 4. Run the container with an interactive shell, mounting artifacts/ for output persistence:
 docker run -it --rm --gpus all \
   -v $(pwd)/artifacts:/workspace/artifacts \
   -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
@@ -42,11 +107,13 @@ docker run -it --rm --gpus all \
   rufimelo/lm-insecure-bias:latest \
   bash
 ```
-Once inside the container, you can run any of the steps normally.
+
+Once inside the container, you can run any of the steps below normally. The `-v` flag ensures outputs written to `artifacts/` persist to your host machine. For analysis only (no GPU needed), omit `--gpus all`.
 
 ## Local Installation
+
 ```bash
-# 1. Clone the repository with submodules
+# 1. Clone the repository
 git clone --recurse-submodules https://github.com/rufimelo99/lm-insecure-bias.git
 cd lm-insecure-bias
 
@@ -62,17 +129,28 @@ export GITHUB_BEARER_TOKEN=your_github_token_here
 
 # 5. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
-or 
+# or:
 export HF_TOKEN=your_huggingface_token_here
 ```
 
-
-  
-
+---
 
 ## Recommended Workflow for Artifact Evaluators
-1. **Skip Steps 1–4** since all intermediate and final artifacts are already included in the repository under `artifacts/`. These steps require GPU and internet access, so skipping them allows you to validate the analysis and reproduce figures without needing those resources. 
-3. **Open and run the analysis notebook** (`sec_aware_cl/alignment/analysis.ipynb`) to reproduce all figures from the paper using the pre-computed results or run the `analysis.py` script for a headless option. The notebook/script reads from the pre-computed results in `artifacts/security_alignment/` and generates all publication-ready figures saved to `artifacts/plots/`.
+
+1. **Skip Steps 1–3** since all intermediate and final artifacts are already included in the repository under `artifacts/`. These steps require GPU and internet access.
+2. **Run the analysis script** to reproduce all figures from the paper using the pre-computed results:
+   ```bash
+   python sec_aware_cl/alignment/analysis.py
+   ```
+   Figures are saved to `artifacts/plots/`. See [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) for details.
+
+**Basic installation test** (no GPU or internet required):
+
+```bash
+python validate.py
+```
+
+This smoke-test verifies imports, artifact file presence, and the correctness of Step 2 and Step 4 logic. All checks print `[OK]` on success.
 
 ---
 
@@ -80,14 +158,16 @@ export HF_TOKEN=your_huggingface_token_here
 
 The pipeline has four steps. **Steps 1–3 require a GPU and internet access.** All intermediate and final artifacts are already included in `artifacts/`, so evaluators can skip ahead.
 
-### Step 1 — Process the Raw Secommits Dataset (Data already present in `artifacts/`)
+### Step 1 — Process the Raw Secommits Dataset (data already present in `artifacts/`)
 
 Fetches commit diffs from the GitHub API and produces a filtered JSONL with `prior_version` (vulnerable) and `after_version` (safe) code snippets.
 
 > The final dataset produced by this step is also available directly on Hugging Face at [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits), so you can skip Steps 1–2 and load it from there.
 
 #### Run through Docker (recommended for artifact evaluators)
+
 First, start an interactive shell in the Docker container with the `artifacts/` directory mounted so you can read/write files:
+
 ```bash
 docker run -it --rm \
   -v $(pwd)/artifacts:/workspace/artifacts \
@@ -123,6 +203,7 @@ python sec_aware_cl/alignment/dataset_builder.py \
 **Output**: `artifacts/security_alignment/data/CWE-*.jsonl`
 
 Each line in the output files contains:
+
 ```json
 {
   "cwe": ["CWE-89"],
@@ -201,11 +282,10 @@ python sec_aware_cl/alignment/analysis.py --artifacts path/to/artifacts
 
 ```bash
 conda activate cl
-pip install jupyter
 jupyter notebook sec_aware_cl/alignment/analysis.ipynb
 ```
 
-The notebook reads from `artifacts/security_alignment/` and `artifacts/security_alignment/raw_data.csv` and generates all figures saved to `artifacts/plots/`.
+Both options read from `artifacts/security_alignment/` and `artifacts/security_alignment/raw_data.csv` and generate all publication-ready figures saved to `artifacts/plots/`.
 
 ---
 
@@ -222,7 +302,6 @@ The notebook reads from `artifacts/security_alignment/` and `artifacts/security_
 
 ---
 
-
 ## Repository Structure
 
 ```
@@ -231,6 +310,9 @@ lm-insecure-bias/
 ├── requirements.txt                   # Python dependencies
 ├── setup.py                           # Package installation script
 ├── Dockerfile                         # Docker image for reproducibility
+├── .dockerignore                      # Files excluded from Docker build context
+├── validate.py                        # Smoke-test: verifies imports, artifact files,
+│                                      #   and Step 2/4 logic (no GPU or internet needed)
 ├── fmt.sh                             # Code formatting script (black + isort)
 │
 ├── sec_aware_cl/                      # Main source package
@@ -256,7 +338,10 @@ lm-insecure-bias/
 │       ├── security_alignment_config.yaml  # YAML configuration listing models and output dirs
 │       ├── join_results.py            # Step 4 — Merges per-model result directories into
 │       │                              #   a single all_models_results/ directory
-│       └── analysis.ipynb             # Jupyter notebook for statistical analysis and
+│       ├── analysis.py                # Headless Python script (equivalent to analysis.ipynb):
+│       │                              #   reads pre-computed results, runs statistical tests,
+│       │                              #   and saves all paper figures to artifacts/plots/
+│       └── analysis.ipynb             # Jupyter notebook for interactive analysis and
 │                                      #   generating all paper figures
 │
 ├── artifacts/
