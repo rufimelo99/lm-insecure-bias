@@ -88,18 +88,22 @@ The models are loaded in 4-bit NF4 quantization via `bitsandbytes`. CPU-only inf
 ## Docker Image Usage
 
 ```bash
-# 1. Download the pre-configured Docker image (all artifacts included):
+# 1. Clone the repository
+git clone --recurse-submodules https://github.com/rufimelo99/lm-insecure-bias.git
+cd lm-insecure-bias
+
+# 2. Download the pre-configured Docker image (all artifacts included):
 docker pull rufimelo/lm-insecure-bias:latest
 
-# 2. Set your GitHub token (needed for Step 1 only)
+# 3. Set your GitHub token (needed for Step 1 only)
 export GITHUB_BEARER_TOKEN=your_github_token_here
 
-# 3. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
+# 4. (Optional) Log in to Hugging Face (needed for CodeLlama models in Step 3)
 huggingface-cli login
 # or:
 export HF_TOKEN=your_huggingface_token_here
 
-# 4. Run the container with an interactive shell, mounting artifacts/ for output persistence:
+# 5. Run the container with an interactive shell, mounting artifacts/ for output persistence:
 docker run -it --rm --gpus all \
   -v $(pwd)/artifacts:/workspace/artifacts \
   -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
@@ -166,14 +170,7 @@ Fetches commit diffs from the GitHub API and produces a filtered JSONL with `pri
 
 #### Run through Docker (recommended for artifact evaluators)
 
-First, start an interactive shell in the Docker container with the `artifacts/` directory mounted so you can read/write files:
-
-```bash
-docker run -it --rm \
-  -v $(pwd)/artifacts:/workspace/artifacts \
-  rufimelo/lm-insecure-bias:latest \
-  bash
-```
+First, start an interactive shell in the Docker container with the `artifacts/` directory mounted so you can read/write files. Then run:
 
 ```bash
 python sec_aware_cl/secommits/process_json.py \
