@@ -4,6 +4,8 @@ This repository contains the artifact for the paper *"Do Code LLMs Prefer Insecu
 
 We frame security alignment as a preference problem inspired by Direct Preference Optimization (DPO): for each vulnerable/safe code pair from real-world security commits, we measure whether the model assigns higher log-probability to the safe version (`chosen`) than to the vulnerable version (`rejected`). We additionally report perplexity differences and token-level entropy (uncertainty).
 
+**Dataset**: The final alignment dataset (DeltaSeCommits) is publicly available on Hugging Face: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits)
+
 ---
 
 ## Repository Structure
@@ -142,6 +144,8 @@ The pipeline has four steps. **Steps 1–3 require a GPU and internet access.** 
 ### Step 1 — Process the Raw SeCommits Dataset
 
 Fetches commit diffs from the GitHub API and produces a filtered JSONL with `prior_version` (vulnerable) and `after_version` (safe) code snippets.
+
+> The final dataset produced by this step is also available directly on Hugging Face at [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits), so you can skip Steps 1–2 and load it from there.
 
 ```bash
 python sec_aware_cl/secommits/process_json.py \
