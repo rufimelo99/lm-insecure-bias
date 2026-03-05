@@ -1,0 +1,10 @@
+.git/
+.gitmodules
+PurpleLlama/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.DS_Store
+.pre-commit-config.yaml
+.claude/
+tests/
