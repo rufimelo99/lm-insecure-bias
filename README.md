@@ -39,6 +39,7 @@ All data, pre-computed model results, and analysis scripts are included to repro
 ## Provenance
 
 - **Paper**: *Do Code LLMs Prefer Insecure Code? A Probabilistic Study of Security Misalignment* — Melo, Rui and Reis, Sofia and Catarino, Andre and Abreu, Rui. ICST 2026, IEEE.
+- **Paper (PDF)**: [ICST2026_paper.pdf](./ICST2026_paper.pdf)
 - **GitHub repository**: [https://github.com/rufimelo99/lm-insecure-bias](https://github.com/rufimelo99/lm-insecure-bias)
 - **Docker image**: [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias)
 - **Dataset**: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits) on Hugging Face
@@ -410,4 +411,4 @@ If you use this artifact, please cite:
 
 View the embedded archive here:
 
-[View the archived repository on Software Heritage](https://archive.softwareheritage.org/browse/embed/swh:1:dir:c2ebf99ed670d8144cff8db8f7c53295fce749bd;origin=https://github.com/rufimelo99/lm-insecure-bias;visit=swh:1:snp:e6a35affaa6f834b33aaac855c694c93afe272c3;anchor=swh:1:rev:ba91ac004cc2f0ac89a483adfbc6ddf42d1d58e4/)
+[View the archived repository on Software Heritage](https://archive.softwareheritage.org/swh:1:dir:ccd6fe9127a30b6352df6739665d05c49ac145ae)
