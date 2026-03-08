@@ -69,21 +69,21 @@ All data, pre-computed model results, and analysis scripts are included to repro
 
 ### Hardware Requirements
 
-| Task | Requirement |
-|------|-------------|
-| Reproducing figures (Steps 4 + Analysis) | Any machine with Python 3.10+; no GPU needed |
-| Re-running model inference (Step 3) | CUDA-capable GPU with **≥ 16 GB VRAM** |
+| Task | CPU | GPU | Disk |
+|------|-----|-----|------|
+| Reproducing figures (Steps 4 + Analysis) | Any modern CPU | Not required | ~130 MB |
+| Re-running model inference (Step 3) | Any modern CPU | CUDA-capable, **≥ 16 GB VRAM** | ~130 MB + model weights |
 
 The models are loaded in 4-bit NF4 quantization via `bitsandbytes`. CPU-only inference is not supported for Step 3. All other steps (data processing, analysis, figure generation) run on CPU.
 
 ### Software Requirements
 
-- **Python 3.10+**
-- **Conda** (recommended) or any Python virtual environment manager
+- **Operating system**: Linux (recommended); macOS and Windows supported for analysis-only steps. Docker is recommended on all platforms.
+- **Docker** (**recommended** for artifact evaluators) — a pre-configured image [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias) is provided with all dependencies and artifacts pre-installed. No local Python setup is needed.
+- **Python 3.10+** with **Conda** (for local installation without Docker)
 - **GitHub Personal Access Token** — required for Step 1 only (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
   - As of March 2026, obtain a token at `https://github.com/settings/personal-access-tokens/new` with `Public repositories` access.
 - **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
-- **Docker** (optional, but recommended for artifact evaluators — provides a fully pre-configured environment without GPU or internet access)
 
 > **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) to validate the analysis without running model inference. We recommend using the provided Docker image for the simplest setup.
 
