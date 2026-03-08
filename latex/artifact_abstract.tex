@@ -8,7 +8,8 @@
 \usepackage{xspace}
 \usepackage{balance}
 
-\title{Artifact Abstract: Do Code LLMs Prefer Insecure Code?\\
+\title{Artifact Abstract: \\
+       Do Code LLMs Prefer Insecure Code?\\
        A Probabilistic Study of Security Misalignment}
 
 \author{
@@ -31,6 +32,7 @@ to reproduce the main results}---all pre-computed model outputs are included.
 \end{abstract}
 
 % ---- 1. Overview ----
+\vspace{0.5cm}
 \section{Overview}
 
 Security misalignment in code LLMs is a subtle yet consequential risk: a model
@@ -56,22 +58,48 @@ computed per pair and per model:
 \noindent Statistical significance is assessed via Wilcoxon signed-rank tests.
 
 % ---- 2. Dataset ----
+\vspace{0.5cm}
 \section{Dataset: DeltaSecommits}
 
-The dataset is built from \emph{SeCommits}, a collection of OSV-sourced
-security commits. Raw commits are fetched from the GitHub API, filtered to single-file, single-commit patches in ten source-code languages, and restricted to CWEs with $\geq 30$ samples. After deduplication by vulnerability ID, the result is a JSONL of matched (vulnerable, safe) pairs annotated with CWE, CVSS score, and commit metadata. Each record follows the DPO schema:
-\texttt{chosen} (safe code) and \texttt{rejected} (vulnerable code).
-The final dataset is also hosted on Hugging~Face at
+The dataset is built from \emph{Secommits}, a collection of OSV-sourced
+security commits. Raw commits are fetched from the GitHub API, filtered to
+single-file, single-commit patches in ten source-code languages
+(\texttt{.java}, \texttt{.py}, \texttt{.c}, \texttt{.cpp}, \texttt{.js},
+\texttt{.ts}, \texttt{.go}, and others), and restricted to CWEs with
+$\geq 30$ samples. After deduplication by vulnerability ID, the result is a
+JSONL of matched (vulnerable, safe) pairs annotated with CWE, CVSS score, and
+commit metadata. Each record follows the DPO schema with
+\texttt{chosen} (safe code) and \texttt{rejected} (vulnerable code):
+
+\smallskip
+{\footnotesize
+\begin{verbatim}
+{ "cwe": ["CWE-89"],
+  "chosen": "<safe code snippet>",
+  "rejected": "<vulnerable code snippet>",
+  "vuln_id": "GHSA-xxxx", "score": 7.5,
+  "additions": 3, "deletions": 1,
+  "published_date": "2021-07-27",
+  "commit_href": "https://github.com/..." }
+\end{verbatim}
+}
+
+\noindent The final dataset is hosted on Hugging~Face at
 \href{https://huggingface.co/datasets/rufimelo/DeltaSecommits}%
-{\texttt{rufimelo/DeltaSecommits}}.
+{\texttt{rufimelo/DeltaSecommits}} and can be used independently of the rest
+of the artifact.
 All data is sourced exclusively from public repositories and open vulnerability
 databases; no PII, credentials, or proprietary code is included.
 
 % ---- 3. Models ----
+\vspace{0.5cm}
 \section{Models Evaluated}
 
-Six code-focused LLMs were evaluated in 4-bit NF4 quantisation
-(Table~\ref{tab:models}) using forward-pass inference only---no fine-tuning is performed.
+Six code-focused LLMs were evaluated in 4-bit NF4 quantisation via
+\texttt{bitsandbytes} (Table~\ref{tab:models}) using forward-pass inference
+only---no fine-tuning is performed. This quantisation strategy enables
+inference on consumer-grade GPUs ($\geq$16\,GB VRAM) while preserving model
+fidelity for the log-probability comparisons used in the study.
 
 \begin{table}[h]
 \centering
@@ -93,38 +121,124 @@ CodeLlama-13B  & \texttt{meta-llama/CodeLlama-13b-hf} \\
 \end{tabular}
 \end{table}
 
-The framework is extensible: additional models can be evaluated by updating \texttt{security\_alignment\_config.yaml} and running Step~3.
+The framework is extensible: additional models can be evaluated by updating
+\texttt{security\_alignment\_config.yaml} and re-running Step~3.
 
-% ---- 4. Artifact Contents ----
+% ---- 4. Metrics ----
+\vspace{0.5cm}
+\section{Metrics}
+
+Table~\ref{tab:metrics} summarises the six quantitative metrics recorded for
+every (safe, vulnerable) code pair and model. Together they provide
+complementary views of \emph{preference} (which variant the model is more
+likely to generate), \emph{fluency} (how natural the model finds each variant),
+\emph{confidence} (how certain the model is at the token level), and
+\emph{alignment loss} (a scalar derived from the DPO objective).
+
+\begin{table}[h]
+\centering
+\caption{Metrics computed per sample and model.}
+\label{tab:metrics}
+\footnotesize
+\begin{tabular}{p{1.8cm}p{5.5cm}}
+\toprule
+\textbf{Metric} & \textbf{Description} \\
+\midrule
+Log-probability & Sum of token log-probs; higher value means the model
+                  prefers the snippet. \\
+Aligned         & \texttt{True} if $\log p(\text{safe}) > \log p(\text{vuln})$. \\
+Perplexity      & Exponentiated average negative log-likelihood; lower
+                  means more fluent. \\
+PPL diff        & $\text{ppl}(\text{vuln}) - \text{ppl}(\text{safe})$;
+                  positive means the model finds vulnerable code more surprising. \\
+Uncertainty     & Mean Shannon entropy over token distributions; lower means
+                  more confident predictions. \\
+DPO loss        & $\text{softplus}(-\beta \cdot (\log p(\text{safe}) -
+                  \log p(\text{vuln})))$; lower means better alignment. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- 5. Artifact Contents ----
+\vspace{0.5cm}
 \section{Artifact Contents}
 
-The repository ($\sim$130 MB total) contains:
+The repository ($\sim$130\,MB total, all artifacts pre-included) contains:
 
 \begin{itemize}
-  \item \texttt{secommits-raw.json} --- raw OSV-sourced dataset.
-  \item \texttt{secommits\_filtered\_final.jsonl} --- cleaned pairs.
-  \item \texttt{security\_alignment/data/CWE-*.jsonl} --- per-CWE
+  \item \texttt{secommits-raw.json} ($\sim$50\,MB)---raw OSV-sourced dataset.
+  \item \texttt{secommits\_filtered\_final.jsonl} ($\sim$15\,MB)---cleaned pairs.
+  \item \texttt{security\_alignment/data/CWE-*.jsonl} ($\sim$5\,MB)---per-CWE
         DPO-style alignment datasets (chosen/rejected pairs).
-  \item \texttt{security\_alignment/*\_results/} --- per-model result
-        files for all six models (log-prob, PPL, entropy, DPO loss).
-  \item \texttt{artifacts/plots/} --- publication-ready PDF figures.
-  \item \texttt{analysis.py} / \texttt{analysis.ipynb} --- scripts to
-        regenerate all paper figures from pre-computed results.
-  \item \texttt{validate.py} --- smoke-test: checks imports, artifact
-        integrity, and logic without GPU or internet access.
+  \item \texttt{security\_alignment/raw\_data.csv} ($\sim$10\,MB)---flat CSV
+        of all per-sample model scores.
+  \item \texttt{security\_alignment/*\_results/} ($\sim$30\,MB total)---per-model
+        result files for all six models (log-prob, PPL, entropy, DPO loss).
+  \item \texttt{security\_alignment/all\_models\_results/} ($\sim$5\,MB)---merged
+        results across all models.
+  \item \texttt{artifacts/plots/} ($\sim$10\,MB)---publication-ready PDF figures
+        including alignment graphs, perplexity/entropy comparisons,
+        DPO heatmaps, and Wilcoxon test summaries.
+  \item \texttt{analysis.py} / \texttt{analysis.ipynb}---scripts to regenerate
+        all paper figures from pre-computed results.
+  \item \texttt{validate.py}---smoke-test: checks imports, artifact integrity,
+        and Step~2/4 logic without GPU or internet access.
 \end{itemize}
 
-% ---- 5. Reproducibility ----
+% ---- 6. Pipeline ----
+\vspace{0.5cm}
+\section{Analysis Pipeline}
+
+The artifact implements a four-step pipeline. \textbf{Steps 1--3 require a
+GPU and internet access; all intermediate outputs are pre-included so
+evaluators can skip ahead to Step~4 or directly to the analysis.}
+
+\paragraph{Step 1 -- Dataset processing.}
+\texttt{sec\_aware\_cl/secommits/process\_json.py} fetches commit diffs from
+the GitHub API, applies language and CWE filters, and writes
+\texttt{secommits\_filtered\_final.jsonl}.
+
+\paragraph{Step 2 -- Alignment dataset construction.}
+\texttt{dataset\_builder.py} converts the filtered JSONL into per-CWE
+DPO-style files under \texttt{security\_alignment/data/}.
+
+\paragraph{Step 3 -- Forward-pass inference.}
+\texttt{security\_alignment.py} loads each quantised model and runs forward
+passes on every code pair, writing per-CWE JSONL results (scores, flags,
+DPO loss) and a summary \texttt{alignment\_stats.jsonl} per model. The target
+model list is controlled via \texttt{security\_alignment\_config.yaml}.
+
+\paragraph{Step 4 -- Result merging.}
+\texttt{join\_results.py} combines the six per-model result directories into
+\texttt{all\_models\_results/} for cross-model analysis.
+
+% ---- 7. Reproducibility ----
+\vspace{0.5cm}
 \section{Reproducibility}
 
 \paragraph{Assumed reviewer skills.}
 Basic command-line proficiency and Docker are sufficient to reproduce all paper
 figures. Familiarity with Python/conda and a Hugging~Face account are needed
-only for the full inference pipeline (Step~3). GPU setup (CUDA) is required
-only to rerun model inference.
+only for the full inference pipeline (Step~3). A CUDA GPU ($\geq$16\,GB VRAM)
+is required only to re-run model inference.
 
-\paragraph{Recommended path for evaluators.}
-Pull the Docker image and reproduce all paper figures from pre-computed results
+% \begin{table}[ht]
+% \centering
+% \caption{Hardware requirements by task.}
+% \label{tab:hw}
+% \footnotesize
+% \begin{tabular}{p{3.0cm}p{2.0cm}p{1.8cm}}
+% \toprule
+% \textbf{Task} & \textbf{GPU} & \textbf{Disk} \\
+% \midrule
+% Reproduce figures (Steps~4 + analysis) & Not required & $\sim$130\,MB \\
+% Re-run inference (Step~3) & $\geq$16\,GB VRAM & 130\,MB + weights \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+\paragraph{Recommended path for evaluators (Docker).}
+Pull the image and reproduce all paper figures from pre-computed results
 (omit \texttt{--gpus all} if no GPU is available):
 
 {\small\begin{verbatim}
@@ -133,20 +247,19 @@ docker run -it --rm --gpus all \
   -v $(pwd)/artifacts:/workspace/artifacts \
   -e GITHUB_BEARER_TOKEN=$GITHUB_BEARER_TOKEN \
   -e HF_TOKEN=$HF_TOKEN \
-  rufimelo/lm-insecure-bias:latest \
-  bash
+  rufimelo/lm-insecure-bias:latest bash
 # inside the container:
 python validate.py
 python sec_aware_cl/alignment/analysis.py
 \end{verbatim}}
 
-\paragraph{Full pipeline (GPU required).}
-Reviewers with a CUDA GPU ($\geq$16 GB VRAM) may rerun the four pipeline
-steps: (1) raw dataset processing, (2) DPO-style pair construction,
-(3) per-model forward-pass inference, and (4) result merging. Full
-instructions are in the repository README.
 
-% ---- 6. Availability ----
+\paragraph{Full pipeline (GPU required).}
+Reviewers with a CUDA GPU may rerun the four pipeline steps for end-to-end
+validation. Full instructions are in the repository README.
+
+% ---- 8. Availability ----
+\vspace{0.5cm}
 \section{Availability and Badges}
 
 The artifact is publicly and permanently available at:
@@ -158,10 +271,10 @@ The artifact is publicly and permanently available at:
         \href{https://huggingface.co/datasets/rufimelo/DeltaSecommits}%
              {\texttt{rufimelo/DeltaSecommits}}
   \item \textbf{Software Heritage (Permalink)}:
-        \href{https://archive.softwareheritage.org/swh:1:dir:ccd6fe9127a30b6352df6739665d05c49ac145ae;origin=https://github.com/rufimelo99/lm-insecure-bias;visit=swh:1:snp:05bb4115d934eb50b7eede4f5156f90eb29a6206;anchor=swh:1:rev:2663f03af9e15d788ef5e59b7e1e38a7fff7499b}%
+        \href{https://archive.softwareheritage.org/swh:1:dir:7d83a351c04d394cd0800bfd1662ecc813245825;origin=https://github.com/rufimelo99/lm-insecure-bias;visit=swh:1:snp:c4cd318e8d1e3bbce65b7ffa9af54215c621b92b;anchor=swh:1:rev:f1c9ca390901276f2e42a397539f30e12ce2c549}%
              {\texttt{lm-insecure-bias}}
    \item \textbf{Software Heritage (SWH ID)}:
-            \url{swh:1:dir:ccd6fe9127a30b6352df6739665d05c49ac145ae}
+            \url{swh:1:dir:7d83a351c04d394cd0800bfd1662ecc813245825}
 \end{itemize}
 
 \noindent\textbf{Artifact badges.}
