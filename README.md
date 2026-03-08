@@ -29,7 +29,10 @@ The framework evaluates whether a model **probabilistically prefers secure code*
 
 All data, pre-computed model results, and analysis scripts are included to reproduce every figure and statistical test in the paper **without requiring GPU access or model re-inference**. The full pipeline is also provided for those with GPU access who wish to validate the entire process.
 
-**Artifact badges claimed**: *Artifact Available* (hosted on GitHub and Docker Hub) and *Artifact Reviewed* (functional, documented, and reproducible).
+**Artifact badges claimed**:
+
+- **Artifact Available**: The artifact is permanently and openly hosted on [GitHub](https://github.com/rufimelo99/lm-insecure-bias) and [Docker Hub](https://hub.docker.com/r/rufimelo/lm-insecure-bias), and the dataset is publicly available on [Hugging Face](https://huggingface.co/datasets/rufimelo/DeltaSecommits). Long-term archival is ensured via [Software Heritage](https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://github.com/rufimelo99/lm-insecure-bias&visit_type=git). All components are accessible without restrictions.
+- **Artifact Reviewed**: The artifact is functional, documented, and reproducible. A smoke-test script (`validate.py`) verifies imports, artifact integrity, and pipeline logic. All paper figures can be reproduced from pre-computed results with a single command and no GPU access. A Docker image provides a fully configured, self-contained environment. The full inference pipeline is also included for end-to-end validation by reviewers with GPU access.
 
 ---
 
@@ -39,6 +42,7 @@ All data, pre-computed model results, and analysis scripts are included to repro
 - **GitHub repository**: [https://github.com/rufimelo99/lm-insecure-bias](https://github.com/rufimelo99/lm-insecure-bias)
 - **Docker image**: [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias)
 - **Dataset**: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits) on Hugging Face
+- **Software Heritage**: [archive.softwareheritage.org](https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://github.com/rufimelo99/lm-insecure-bias&visit_type=git)
 
 
 ---

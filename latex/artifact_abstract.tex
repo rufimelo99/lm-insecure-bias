@@ -126,6 +126,9 @@ docker run -it --rm --gpus all \
   -e HF_TOKEN=$HF_TOKEN \
   rufimelo/lm-insecure-bias:latest \
   bash
+# inside the container:
+python validate.py
+python sec_aware_cl/alignment/analysis.py
 \end{verbatim}}
 
 \paragraph{Full pipeline (GPU required).}
