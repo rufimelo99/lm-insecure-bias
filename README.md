@@ -29,7 +29,10 @@ The framework evaluates whether a model **probabilistically prefers secure code*
 
 All data, pre-computed model results, and analysis scripts are included to reproduce every figure and statistical test in the paper **without requiring GPU access or model re-inference**. The full pipeline is also provided for those with GPU access who wish to validate the entire process.
 
-**Artifact badges claimed**: *Artifact Available* (hosted on GitHub and Docker Hub) and *Artifact Reviewed* (functional, documented, and reproducible).
+**Artifact badges claimed**:
+
+- **Artifact Available**: The artifact is permanently and openly hosted on [GitHub](https://github.com/rufimelo99/lm-insecure-bias) and [Docker Hub](https://hub.docker.com/r/rufimelo/lm-insecure-bias), and the dataset is publicly available on [Hugging Face](https://huggingface.co/datasets/rufimelo/DeltaSecommits). Long-term archival is ensured via [Software Heritage](https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://github.com/rufimelo99/lm-insecure-bias&visit_type=git). All components are accessible without restrictions.
+- **Artifact Reviewed**: The artifact is functional, documented, and reproducible. A smoke-test script (`validate.py`) verifies imports, artifact integrity, and pipeline logic. All paper figures can be reproduced from pre-computed results with a single command and no GPU access. A Docker image provides a fully configured, self-contained environment. The full inference pipeline is also included for end-to-end validation by reviewers with GPU access.
 
 ---
 
@@ -39,6 +42,7 @@ All data, pre-computed model results, and analysis scripts are included to repro
 - **GitHub repository**: [https://github.com/rufimelo99/lm-insecure-bias](https://github.com/rufimelo99/lm-insecure-bias)
 - **Docker image**: [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias)
 - **Dataset**: [rufimelo/DeltaSecommits](https://huggingface.co/datasets/rufimelo/DeltaSecommits) on Hugging Face
+- **Software Heritage**: [archive.softwareheritage.org](https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://github.com/rufimelo99/lm-insecure-bias&visit_type=git)
 
 
 ---
@@ -57,7 +61,7 @@ All data, pre-computed model results, and analysis scripts are included to repro
 
 **Total disk space required**: ~130 MB (all artifacts are already included in the repository).
 
-All data is derived from publicly available sources (OSV vulnerability database, public GitHub commits).
+**Ethical and legal considerations**: All data is derived exclusively from publicly available sources (OSV vulnerability database, public GitHub repositories) under open licenses. No private, personal, or proprietary data is included. The dataset contains only code snippets from security patches — no credentials, PII, or sensitive user data.
 
 ---
 
@@ -65,21 +69,21 @@ All data is derived from publicly available sources (OSV vulnerability database,
 
 ### Hardware Requirements
 
-| Task | Requirement |
-|------|-------------|
-| Reproducing figures (Steps 4 + Analysis) | Any machine with Python 3.10+; no GPU needed |
-| Re-running model inference (Step 3) | CUDA-capable GPU with **≥ 16 GB VRAM** |
+| Task | CPU | GPU | Disk |
+|------|-----|-----|------|
+| Reproducing figures (Steps 4 + Analysis) | Any modern CPU | Not required | ~130 MB |
+| Re-running model inference (Step 3) | Any modern CPU | CUDA-capable, **≥ 16 GB VRAM** | ~130 MB + model weights |
 
 The models are loaded in 4-bit NF4 quantization via `bitsandbytes`. CPU-only inference is not supported for Step 3. All other steps (data processing, analysis, figure generation) run on CPU.
 
 ### Software Requirements
 
-- **Python 3.10+**
-- **Conda** (recommended) or any Python virtual environment manager
+- **Operating system**: Linux (recommended); macOS and Windows supported for analysis-only steps. Docker is recommended on all platforms.
+- **Docker** (**recommended** for artifact evaluators) — a pre-configured image [`rufimelo/lm-insecure-bias:latest`](https://hub.docker.com/r/rufimelo/lm-insecure-bias) is provided with all dependencies and artifacts pre-installed. No local Python setup is needed.
+- **Python 3.10+** with **Conda** (for local installation without Docker)
 - **GitHub Personal Access Token** — required for Step 1 only (fetching commit diffs from the GitHub API). Set as `GITHUB_BEARER_TOKEN`.
   - As of March 2026, obtain a token at `https://github.com/settings/personal-access-tokens/new` with `Public repositories` access.
 - **Hugging Face account** with access to gated models (`meta-llama/CodeLlama-*`). Run `huggingface-cli login` before Step 3.
-- **Docker** (optional, but recommended for artifact evaluators — provides a fully pre-configured environment without GPU or internet access)
 
 > **Note for artifact evaluators**: Steps 1–3 produce the data in `artifacts/`. These artifacts are already included in the repository, so you can skip directly to [Reproducing Figures from Pre-computed Results](#reproducing-figures-from-pre-computed-results) to validate the analysis without running model inference. We recommend using the provided Docker image for the simplest setup.
 
@@ -401,3 +405,9 @@ If you use this artifact, please cite:
   publisher = {IEEE}
 }
 ```
+
+## Software Heritage Archive
+
+View the embedded archive here:
+
+[View the archived repository on Software Heritage](https://archive.softwareheritage.org/browse/embed/swh:1:dir:c2ebf99ed670d8144cff8db8f7c53295fce749bd;origin=https://github.com/rufimelo99/lm-insecure-bias;visit=swh:1:snp:e6a35affaa6f834b33aaac855c694c93afe272c3;anchor=swh:1:rev:ba91ac004cc2f0ac89a483adfbc6ddf42d1d58e4/)
