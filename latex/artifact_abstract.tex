@@ -58,12 +58,14 @@ computed per pair and per model:
 % ---- 2. Dataset ----
 \section{Dataset: DeltaSecommits}
 
-The dataset is built from \emph{Secommits}, a collection of OSV-sourced
+The dataset is built from \emph{SeCommits}, a collection of OSV-sourced
 security commits. Raw commits are fetched from the GitHub API, filtered to single-file, single-commit patches in ten source-code languages, and restricted to CWEs with $\geq 30$ samples. After deduplication by vulnerability ID, the result is a JSONL of matched (vulnerable, safe) pairs annotated with CWE, CVSS score, and commit metadata. Each record follows the DPO schema:
 \texttt{chosen} (safe code) and \texttt{rejected} (vulnerable code).
 The final dataset is also hosted on Hugging~Face at
 \href{https://huggingface.co/datasets/rufimelo/DeltaSecommits}%
 {\texttt{rufimelo/DeltaSecommits}}.
+All data is sourced exclusively from public repositories and open vulnerability
+databases; no PII, credentials, or proprietary code is included.
 
 % ---- 3. Models ----
 \section{Models Evaluated}
@@ -91,7 +93,7 @@ CodeLlama-13B  & \texttt{meta-llama/CodeLlama-13b-hf} \\
 \end{tabular}
 \end{table}
 
-Note: In order to include more models, \texttt{sec\_aware\_cl/\allowbreak alignment/\allowbreak security\_alignment\_config.yaml} would need to be updated with the new model ID, and the results of Step~3 (forward-pass inference) would need to be added to the repository.
+The framework is extensible: additional models can be evaluated by updating \texttt{security\_alignment\_config.yaml} and running Step~3.
 
 % ---- 4. Artifact Contents ----
 \section{Artifact Contents}
@@ -115,8 +117,15 @@ The repository ($\sim$130 MB total) contains:
 % ---- 5. Reproducibility ----
 \section{Reproducibility}
 
-\paragraph{Recommended path (no GPU needed).}
-Pull the Docker image and reproduce all paper figures from pre-computed results:
+\paragraph{Assumed reviewer skills.}
+Basic command-line proficiency and Docker are sufficient to reproduce all paper
+figures. Familiarity with Python/conda and a Hugging~Face account are needed
+only for the full inference pipeline (Step~3). GPU setup (CUDA) is required
+only to rerun model inference.
+
+\paragraph{Recommended path for evaluators.}
+Pull the Docker image and reproduce all paper figures from pre-computed results
+(omit \texttt{--gpus all} if no GPU is available):
 
 {\small\begin{verbatim}
 docker pull rufimelo/lm-insecure-bias:latest
@@ -148,10 +157,17 @@ The artifact is publicly and permanently available at:
   \item \textbf{Dataset (HF)}:
         \href{https://huggingface.co/datasets/rufimelo/DeltaSecommits}%
              {\texttt{rufimelo/DeltaSecommits}}
-  \item \textbf{Software Heritage}:
+  \item \textbf{Software Heritage (archive)}:
         \href{https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://github.com/rufimelo99/lm-insecure-bias&visit_type=git}%
-             {\texttt{Repo}}
+             {\texttt{lm-insecure-bias}}
 \end{itemize}
+
+\noindent\textbf{Artifact badges.}
+\emph{Artifact Available}: all components are openly hosted with no access
+restrictions and archived on Software Heritage for long-term preservation.
+\emph{Artifact Reviewed}: the artifact is functional (\texttt{validate.py}
+smoke-test), documented (README + Docker), and reproducible (all paper figures
+regenerable from pre-computed results without GPU access).
 
 \balance
 \end{document}
