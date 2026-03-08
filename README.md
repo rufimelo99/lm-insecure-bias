@@ -61,7 +61,7 @@ All data, pre-computed model results, and analysis scripts are included to repro
 
 **Total disk space required**: ~130 MB (all artifacts are already included in the repository).
 
-All data is derived from publicly available sources (OSV vulnerability database, public GitHub commits).
+**Ethical and legal considerations**: All data is derived exclusively from publicly available sources (OSV vulnerability database, public GitHub repositories) under open licenses. No private, personal, or proprietary data is included. The dataset contains only code snippets from security patches — no credentials, PII, or sensitive user data.
 
 ---
 
