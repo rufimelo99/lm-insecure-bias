@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(pdflatex -interaction=nonstopmode artifact_abstract.tex)",
-      "Bash(ls /Users/rmelo/Documents/GitHub/SecurityAwareCL/*.pdf)"
-    ]
-  }
-}
